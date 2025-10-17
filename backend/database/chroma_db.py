@@ -1,5 +1,5 @@
 """
-ChromaDB for vector storage and RAG
+ChromaDB for vector storage and RAG with Google embeddings
 """
 import os
 import logging
@@ -9,12 +9,47 @@ logger = logging.getLogger(__name__)
 try:
     import chromadb
     from chromadb.config import Settings as ChromaSettings
+    import google.generativeai as genai
     CHROMADB_AVAILABLE = True
-except ImportError:
+    GOOGLE_AI_AVAILABLE = True
+except ImportError as e:
     CHROMADB_AVAILABLE = False
-    logger.warning("⚠️ ChromaDB not available - RAG features will be limited")
+    GOOGLE_AI_AVAILABLE = False
+    logger.warning(f"⚠️ ChromaDB or Google AI not available: {e}")
 
 from utils.config import settings
+
+
+class GoogleEmbeddingFunction:
+    """Custom embedding function using Google's text-embedding-004"""
+    def __init__(self):
+        try:
+            genai.configure(api_key=settings.GOOGLE_AI_API_KEY)
+            self.available = True
+            logger.info("✅ Google text-embedding-004 configured")
+        except Exception as e:
+            logger.warning(f"⚠️ Google embeddings not available: {e}")
+            self.available = False
+    
+    def __call__(self, input: list[str]) -> list[list[float]]:
+        """Generate embeddings for input texts"""
+        if not self.available:
+            # Fallback to default ChromaDB embeddings
+            return None
+        
+        try:
+            embeddings = []
+            for text in input:
+                result = genai.embed_content(
+                    model="models/text-embedding-004",
+                    content=text,
+                    task_type="retrieval_document"
+                )
+                embeddings.append(result['embedding'])
+            return embeddings
+        except Exception as e:
+            logger.warning(f"⚠️ Google embedding failed: {e}, using default")
+            return None
 
 
 class ChromaDBClient:
@@ -37,12 +72,28 @@ class ChromaDBClient:
                 settings=ChromaSettings(anonymized_telemetry=False)
             )
             
+            # Create embedding function
+            embedding_function = None
+            if GOOGLE_AI_AVAILABLE:
+                try:
+                    embedding_function = GoogleEmbeddingFunction()
+                    if not embedding_function.available:
+                        embedding_function = None
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to create Google embedding function: {e}")
+                    embedding_function = None
+            
             # Create or get collection for supplier documents
             self.collection = self.client.get_or_create_collection(
                 name="supplier_documents",
-                metadata={"description": "Supplier certificates and compliance documents"}
+                metadata={"description": "Supplier certificates and compliance documents"},
+                embedding_function=embedding_function
             )
-            logger.info("✅ ChromaDB initialized successfully")
+            
+            if embedding_function:
+                logger.info("✅ ChromaDB initialized with Google text-embedding-004")
+            else:
+                logger.info("✅ ChromaDB initialized with default embeddings")
         except Exception as e:
             logger.error(f"❌ ChromaDB initialization failed: {e}")
             self.available = False

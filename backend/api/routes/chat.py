@@ -27,6 +27,7 @@ class ChatRequest(BaseModel):
     message: str
     language: str = "en"  # en, ta, hi
     chat_history: List[ChatMessage] = []
+    use_reasoning: bool = False  # Use DeepSeek for complex reasoning
 
 
 @router.post("/message")
@@ -50,7 +51,8 @@ async def send_message(
             response = await llm_service.chat_completion(
                 query=query,
                 chat_history=history,
-                use_rag=True
+                use_rag=True,
+                use_reasoning=request.use_reasoning
             )
         except Exception as llm_error:
             logger.warning(f"LLM service error: {llm_error}, using fallback")
