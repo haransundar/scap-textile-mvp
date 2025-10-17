@@ -56,7 +56,7 @@ export default function RiskAnalysisPage() {
                 <div className="flex justify-between items-center">
                   <h3 className="font-medium text-gray-900 dark:text-white">{supplier.name}</h3>
                   <span className={`text-sm px-2 py-1 rounded-full ${getRiskColor(supplier.riskScore)}`}>
-                    {supplier.riskScore}
+                    {supplier.riskScore}%
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -74,14 +74,14 @@ export default function RiskAnalysisPage() {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {suppliers.find(s => s.id === selectedSupplier)?.name}
+                    {suppliers.find(s => s.id === selectedSupplier)?.name} Risk Assessment
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Overall Risk Score: 
                     <span className={`ml-2 px-2 py-1 rounded-full ${
                       getRiskColor(suppliers.find(s => s.id === selectedSupplier)?.riskScore || 0)
                     }`}>
-                      {suppliers.find(s => s.id === selectedSupplier)?.riskScore}
+                      {suppliers.find(s => s.id === selectedSupplier)?.riskScore}%
                     </span>
                   </p>
                 </div>
@@ -95,53 +95,43 @@ export default function RiskAnalysisPage() {
                 </div>
               </div>
               
-              {/* Risk Factors */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Risk Factors</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead>
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Factor</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Score</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Impact</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {riskFactors.map((factor) => (
-                        <tr key={factor.id}>
-                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{factor.factor}</td>
-                          <td className="px-4 py-3 text-sm">
-                            <span className={`px-2 py-1 rounded-full text-xs ${getRiskColor(factor.score)}`}>
-                              {factor.score}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{factor.impact}</td>
-                          <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{factor.description}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Risk Visualization */}
+              <div className="mb-8">
+                <h3 className="text-md font-medium mb-4 dark:text-white">Risk Factors</h3>
+                <div className="space-y-4">
+                  {riskFactors.map((factor) => (
+                    <div key={factor.id}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium dark:text-white">{factor.factor}</span>
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">Impact: {factor.impact}</span>
+                          <span className="text-sm dark:text-white">{factor.score}%</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div 
+                          className={`h-2.5 rounded-full ${
+                            factor.score < 30 ? 'bg-red-500' :
+                            factor.score < 70 ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`}
+                          style={{ width: `${factor.score}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{factor.description}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
               
               {/* Recommendations */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Recommendations</h3>
-                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                  <li className="flex items-start">
-                    <span className="mr-2 text-green-500">•</span>
-                    <span>Update expiring certificates within the next 2 weeks</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="mr-2 text-green-500">•</span>
-                    <span>Complete missing documentation for EU regulatory compliance</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="mr-2 text-green-500">•</span>
-                    <span>Schedule follow-up audit to address previous findings</span>
-                  </li>
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Recommendations</h3>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-blue-800 dark:text-blue-300">
+                  <li>Update expiring certificates within the next 14 days</li>
+                  <li>Complete missing documentation for EU regulatory compliance</li>
+                  <li>Schedule follow-up audit to address previous findings</li>
+                  <li>Implement automated certificate expiration notifications</li>
                 </ul>
               </div>
             </div>
