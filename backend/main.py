@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from api.routes import suppliers, documents, compliance, risk, chat
+from api.routes import suppliers, documents, compliance, risk, chat, auth
 from api.middleware.error_handler import add_error_handlers
 from database.mongodb import connect_db, close_db
 from utils.config import settings
@@ -48,6 +48,7 @@ app.add_middleware(
 add_error_handlers(app)
 
 # Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(suppliers.router, prefix="/api/suppliers", tags=["Suppliers"])
 app.include_router(documents.router, prefix="/api/documents", tags=["Documents"])
 app.include_router(compliance.router, prefix="/api/compliance", tags=["Compliance"])

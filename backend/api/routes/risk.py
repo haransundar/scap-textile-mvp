@@ -57,7 +57,6 @@ async def calculate_risk_score(supplier_id: str):
         if expiry_dates:
             nearest_expiry = min(expiry_dates)
             if isinstance(nearest_expiry, str):
-                from datetime import datetime
                 nearest_expiry = datetime.fromisoformat(nearest_expiry.replace('Z', '+00:00'))
             days_to_expiry = (nearest_expiry - datetime.utcnow()).days
     

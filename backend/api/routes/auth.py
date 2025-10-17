@@ -1,0 +1,150 @@
+"""
+Authentication routes for user registration and login
+"""
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from typing import Optional
+
+from utils.config import settings
+from database.mongodb import get_database
+
+# Create router
+router = APIRouter()
+
+# Security
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+
+# Models
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    company_name: Optional[str] = None
+    role: str = "supplier"  # Default role
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user_id: str
+    username: str
+    role: str
+
+# Helper functions
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(hours=settings.JWT_EXPIRATION_HOURS)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return encoded_jwt
+
+# Routes
+@router.post("/register", response_model=Token)
+async def register_user(user: UserCreate):
+    """Register a new user"""
+    db = get_database()
+    users_collection = db.users
+    
+    # Check if email already exists
+    existing_email = await users_collection.find_one({"email": user.email})
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create new user
+    hashed_password = get_password_hash(user.password)
+    user_data = user.dict()
+    user_data["password"] = hashed_password
+    user_data["created_at"] = datetime.utcnow()
+    
+    result = await users_collection.insert_one(user_data)
+    user_id = str(result.inserted_id)
+    
+    # Create access token
+    access_token = create_access_token(
+        data={"sub": user.email, "id": user_id, "role": user.role}
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user_id,
+        "email": user.email,
+        "role": user.role
+    }
+
+@router.post("/login", response_model=Token)
+async def login_for_access_token(login_data: UserLogin):
+    """Login and get access token"""
+    db = get_database()
+    users_collection = db.users
+    
+    # Find user by email
+    user = await users_collection.find_one({"email": login_data.email})
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Verify password
+    if not verify_password(login_data.password, user["password"]):
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Create access token
+    access_token = create_access_token(
+        data={"sub": user["email"], "id": str(user["_id"]), "role": user["role"]}
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": str(user["_id"]),
+        "email": user["email"],
+        "role": user["role"]
+    }
+
+@router.get("/me")
+async def read_users_me(token: str = Depends(oauth2_scheme)):
+    """Get current user info"""
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    
+    db = await get_database()
+    users_collection = db.users
+    user = await users_collection.find_one({"username": username})
+    
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Remove password from response
+    user.pop("password", None)
+    user["_id"] = str(user["_id"])
+    
+    return user
