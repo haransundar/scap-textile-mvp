@@ -12,14 +12,31 @@ logger = logging.getLogger(__name__)
 
 class OCRService:
     def __init__(self):
-        """Initialize EasyOCR with English, Tamil, Hindi support"""
+        """Initialize EasyOCR with English and Hindi support"""
         try:
+            # Primary reader: English + Hindi
             self.reader = easyocr.Reader(
-                ['en', 'ta', 'hi'],
+                ['en', 'hi'],
                 gpu=False,  # CPU-only for compatibility
                 verbose=False
             )
-            logger.info("✅ EasyOCR initialized with English, Tamil, Hindi")
+            logger.info("✅ EasyOCR initialized with English, Hindi")
+            
+            # Try to initialize Tamil separately (optional)
+            # Note: Tamil has compatibility issues with current EasyOCR version
+            try:
+                self.reader_tamil = easyocr.Reader(
+                    ['en', 'ta'],
+                    gpu=False,
+                    verbose=False
+                )
+                logger.info("✅ EasyOCR Tamil support enabled")
+                self.tamil_supported = True
+            except Exception as e:
+                logger.warning(f"⚠️ Tamil support unavailable: {e}")
+                self.reader_tamil = None
+                self.tamil_supported = False
+                
         except Exception as e:
             logger.error(f"❌ Failed to initialize EasyOCR: {e}")
             raise

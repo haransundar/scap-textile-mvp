@@ -2,10 +2,10 @@
 LLM service for chatbot using Qwen 2.5 32B via Groq
 """
 from groq import Groq
-from utils.config import settings
+from backend.utils.config import settings
 import logging
 from typing import List, Dict, AsyncGenerator
-from database.chroma_db import chroma_client
+from backend.database.chroma_db import chroma_client
 
 logger = logging.getLogger(__name__)
 
