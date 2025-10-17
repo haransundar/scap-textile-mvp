@@ -2,19 +2,24 @@
 LLM service for chatbot using Qwen 2.5 32B via Groq
 """
 from groq import Groq
-from backend.utils.config import settings
+from utils.config import settings
 import logging
 from typing import List, Dict, AsyncGenerator
-from backend.database.chroma_db import chroma_client
+from database.chroma_db import chroma_client
 
 logger = logging.getLogger(__name__)
 
 
 class LLMService:
     def __init__(self):
-        self.client = Groq(api_key=settings.GROQ_API_KEY)
-        self.model = "qwen2-72b-instruct"  # Using Qwen 2 72B for better performance
-        logger.info("✅ Groq LLM initialized with Qwen 2 72B")
+        try:
+            self.client = Groq(api_key=settings.GROQ_API_KEY)
+            self.model = "qwen2-72b-instruct"  # Using Qwen 2 72B for better performance
+            logger.info("✅ Groq LLM initialized with Qwen 2 72B")
+        except Exception as e:
+            logger.warning(f"⚠️ Groq initialization failed: {e}. LLM features will be limited.")
+            self.client = None
+            self.model = None
     
     async def chat_completion(
         self,
@@ -30,6 +35,9 @@ class LLMService:
             chat_history: Previous messages
             use_rag: Whether to retrieve context from ChromaDB
         """
+        if not self.client:
+            return "LLM service is currently unavailable. Please check the configuration."
+        
         try:
             # Retrieve relevant context if RAG enabled
             context = ""

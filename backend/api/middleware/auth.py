@@ -6,7 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import bcrypt
-from backend.utils.config import settings
+from utils.config import settings
 import logging
 
 logger = logging.getLogger(__name__)

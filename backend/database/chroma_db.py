@@ -14,7 +14,7 @@ except ImportError:
     CHROMADB_AVAILABLE = False
     logger.warning("⚠️ ChromaDB not available - RAG features will be limited")
 
-from backend.utils.config import settings
+from utils.config import settings
 
 
 class ChromaDBClient:
