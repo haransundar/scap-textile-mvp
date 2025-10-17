@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ModeToggle } from '@/components/mode-toggle';
 
 export default function DashboardLayout({
   children,
@@ -12,13 +12,23 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated, checkAuth, logout } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState('en');
 
   useEffect(() => {
-    checkAuth();
+    async function run() {
+      await checkAuth();
+    }
+    run();
   }, [checkAuth]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated, router]);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', current: pathname === '/dashboard' },
@@ -65,7 +75,7 @@ export default function DashboardLayout({
             <div className="hidden md:block">
               <div className="ml-4 flex items-center md:ml-6">
                 <div className="relative ml-3">
-                  <ThemeToggle />
+                  <ModeToggle />
                 </div>
                 <div className="relative ml-3">
                   <select
@@ -165,7 +175,7 @@ export default function DashboardLayout({
               <div className="mt-3 space-y-1 px-2">
                 <div className="flex items-center mb-2">
                   <span className="text-white mr-2">Theme:</span>
-                  <ThemeToggle />
+                  <ModeToggle />
                 </div>
                 <select
                   value={language}

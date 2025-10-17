@@ -15,9 +15,12 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+import { useI18n } from '@/lib/i18n/i18n-provider';
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading, error } = useAuthStore();
+  const { t } = useI18n();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -42,12 +45,12 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Sign in to SCAP
+            {t('login.title')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              register for a new account
+              {t('login.registerPrompt')}
             </Link>
           </p>
         </div>
@@ -69,7 +72,7 @@ export default function LoginPage() {
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
               <label htmlFor="email" className="sr-only">
-                Email address
+                {t('login.email')}
               </label>
               <input
                 id="email"
@@ -77,7 +80,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 {...register('email')}
                 className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                placeholder="Email address"
+                placeholder={t('login.email')}
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -85,7 +88,7 @@ export default function LoginPage() {
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
-                Password
+                {t('login.password')}
               </label>
               <input
                 id="password"
@@ -93,7 +96,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 {...register('password')}
                 className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                placeholder="Password"
+                placeholder={t('login.password')}
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
@@ -128,7 +131,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:bg-blue-300"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Signing in...' : t('login.submit')}
             </button>
           </div>
         </form>

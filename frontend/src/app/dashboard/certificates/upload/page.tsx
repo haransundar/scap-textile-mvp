@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import apiClient from '@/lib/api/client';
 
 const certificateSchema = z.object({
   name: z.string().min(1, 'Certificate name is required'),
@@ -67,32 +68,24 @@ export default function UploadCertificatePage() {
     }
 
     setIsUploading(true);
-    
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 95) {
-          clearInterval(interval);
-          return prev;
-        }
-        return prev + 5;
-      });
-    }, 200);
 
     try {
-      // Mock API call - would be replaced with actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      clearInterval(interval);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await apiClient.post('/api/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (evt) => {
+          if (!evt.total) return;
+          const pct = Math.round((evt.loaded * 100) / evt.total);
+          setUploadProgress(Math.min(99, pct));
+        },
+      });
+
       setUploadProgress(100);
-      
-      // Simulate successful upload
-      setTimeout(() => {
-        router.push('/dashboard/certificates');
-      }, 500);
+      alert('Upload complete! OCR confidence: ' + (res.data.ocr_confidence * 100).toFixed(1) + '%');
     } catch (error) {
       console.error('Error uploading certificate:', error);
-      clearInterval(interval);
       setIsUploading(false);
       setUploadProgress(0);
       alert('Failed to upload certificate. Please try again.');

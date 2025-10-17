@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import apiClient from '@/lib/api/client';
+import { useI18n } from '@/lib/i18n/i18n-provider';
 
 interface Message {
   id: string;
@@ -11,6 +12,7 @@ interface Message {
 }
 
 export default function ChatbotPage() {
+  const { locale } = useI18n();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -21,7 +23,7 @@ export default function ChatbotPage() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState(locale);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -49,29 +51,19 @@ export default function ChatbotPage() {
     setIsLoading(true);
     
     try {
-      // Mock API call - would be replaced with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock response based on input
-      let botResponse = '';
-      
-      if (input.toLowerCase().includes('certificate')) {
-        botResponse = 'Certificates are essential for compliance. Make sure to keep them up-to-date and upload them to the platform for verification. Would you like to know more about specific certificate types?';
-      } else if (input.toLowerCase().includes('risk')) {
-        botResponse = 'Your risk score is calculated based on various factors including certificate validity, compliance history, and industry standards. Regular updates to your certificates can help improve your risk score.';
-      } else if (input.toLowerCase().includes('compliance')) {
-        botResponse = 'Compliance requirements vary by region and industry. The platform helps you track relevant regulations and ensures your certificates meet the necessary standards. Is there a specific compliance area you\'re concerned about?';
-      } else {
-        botResponse = 'Thank you for your question. I can help with information about certificates, compliance requirements, risk assessment, and more. Please let me know what specific information you need.';
-      }
-      
+      const res = await apiClient.post('/api/chat/message', {
+        message: input,
+        language,
+        chat_history: messages.map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.content }))
+      });
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: botResponse,
+        content: res.data.response,
         sender: 'bot',
         timestamp: new Date(),
       };
-      
+
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error('Error sending message:', error);

@@ -5,54 +5,56 @@ import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/auth-store';
 import apiClient from '@/lib/api/client';
 
-interface RiskScore {
-  score: number;
-  lastUpdated: string;
-}
+type RiskDoc = { score: number; calculated_at: string };
+type BackendCert = {
+  _id: string;
+  type: string;
+  number: string;
+  expiry_date?: string;
+  verification_status: string;
+};
 
-interface Certificate {
+type Certificate = {
   id: string;
   name: string;
   status: 'valid' | 'expired' | 'expiring_soon';
   expiryDate: string;
-}
+};
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const [riskScore, setRiskScore] = useState<RiskScore | null>(null);
+  const supplierId = user?.supplier_id;
+  const [riskScore, setRiskScore] = useState<{ score: number; lastUpdated: string } | null>(null);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!supplierId) return;
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
-        // Mock data for now - would be replaced with actual API calls
-        setRiskScore({
-          score: 78,
-          lastUpdated: new Date().toISOString(),
+        // Risk score (calculates if missing)
+        const riskRes = await apiClient.get<RiskDoc>(`/api/risk/score/${supplierId}`);
+        setRiskScore({ score: riskRes.data.score, lastUpdated: riskRes.data.calculated_at });
+
+        // Certificates list
+        const certRes = await apiClient.get<BackendCert[]>(`/api/documents/supplier/${supplierId}`);
+        const mapped: Certificate[] = certRes.data.map((c) => {
+          const expiry = c.expiry_date ? new Date(c.expiry_date) : null;
+          let status: Certificate['status'] = 'valid';
+          if (expiry) {
+            const days = Math.floor((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            if (days < 0) status = 'expired';
+            else if (days < 30) status = 'expiring_soon';
+          }
+          return {
+            id: c._id,
+            name: `${c.type} ${c.number ? `• ${c.number}` : ''}`.trim(),
+            status,
+            expiryDate: expiry ? expiry.toISOString() : '',
+          };
         });
-        
-        setCertificates([
-          {
-            id: '1',
-            name: 'ISO 9001',
-            status: 'valid',
-            expiryDate: '2025-06-15',
-          },
-          {
-            id: '2',
-            name: 'GOTS Certification',
-            status: 'expiring_soon',
-            expiryDate: '2023-12-30',
-          },
-          {
-            id: '3',
-            name: 'Fair Trade Certificate',
-            status: 'valid',
-            expiryDate: '2024-08-22',
-          },
-        ]);
+        setCertificates(mapped);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -61,7 +63,7 @@ export default function DashboardPage() {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [supplierId]);
 
   const getRiskColor = (score: number) => {
     if (score >= 80) return 'text-green-600';

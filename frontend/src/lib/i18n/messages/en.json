@@ -1,0 +1,16 @@
+{
+  "app.title": "SCAP - Supply Chain AI Compliance Platform",
+  "nav.login": "Login",
+  "nav.register": "Register",
+  "login.title": "Sign in to SCAP",
+  "login.email": "Email address",
+  "login.password": "Password",
+  "login.submit": "Sign in",
+  "login.registerPrompt": "register for a new account",
+  "dashboard.title": "Dashboard",
+  "feature.certificates": "Certificate Management",
+  "feature.risk": "Risk Analysis",
+  "feature.chat": "AI Assistant"
+}
+
+

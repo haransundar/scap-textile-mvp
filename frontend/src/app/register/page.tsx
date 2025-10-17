@@ -48,10 +48,8 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     await registerUser(
-      data.email, 
-      data.password, 
-      data.fullName, 
-      data.companyName
+      data.email,
+      data.password
     );
     router.push('/dashboard');
   };

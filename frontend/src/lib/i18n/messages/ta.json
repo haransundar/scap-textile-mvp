@@ -1,0 +1,16 @@
+{
+  "app.title": "SCAP - சப்ளை செயின் AI இணக்கத் தளம்",
+  "nav.login": "உள்நுழைய",
+  "nav.register": "பதிவு செய்ய",
+  "login.title": "SCAP-இல் உள்நுழைக",
+  "login.email": "மின்னஞ்சல் முகவரி",
+  "login.password": "கடவுச்சொல்",
+  "login.submit": "உள்நுழைய",
+  "login.registerPrompt": "புதிய கணக்கை பதிவு செய்ய",
+  "dashboard.title": "டாஷ்போர்டு",
+  "feature.certificates": "சான்றிதழ் மேலாண்மை",
+  "feature.risk": "ஆபத்து பகுப்பாய்வு",
+  "feature.chat": "AI உதவியாளர்"
+}
+
+

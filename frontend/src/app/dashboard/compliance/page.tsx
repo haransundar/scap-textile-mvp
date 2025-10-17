@@ -1,34 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import apiClient from "@/lib/api/client";
+import { useAuthStore } from "@/lib/store/auth-store";
+
+type Regulation = {
+  _id: string;
+  regulation_title: string;
+  jurisdiction: string;
+  effective_date: string;
+  summary: string;
+  penalty?: string;
+};
 
 export default function CompliancePage() {
+  const { user } = useAuthStore();
+  const supplierId = user?.supplier_id;
   const [activeTab, setActiveTab] = useState("regulations");
-  
-  // Mock data for regulations
-  const regulations = [
-    { id: "1", name: "EU CSRD", description: "Corporate Sustainability Reporting Directive", status: "Compliant", dueDate: "2024-06-30" },
-    { id: "2", name: "GDPR", description: "General Data Protection Regulation", status: "Compliant", dueDate: "2024-05-15" },
-    { id: "3", name: "ISO 14001", description: "Environmental Management System", status: "Pending", dueDate: "2024-07-22" },
-    { id: "4", name: "ISO 27001", description: "Information Security Management", status: "At Risk", dueDate: "2024-04-10" },
-    { id: "5", name: "DORA", description: "Digital Operational Resilience Act", status: "Not Started", dueDate: "2024-09-15" },
-  ];
-  
-  // Mock data for audits
-  const audits = [
-    { id: "1", name: "Annual Security Audit", date: "2024-02-15", status: "Completed", findings: 3 },
-    { id: "2", name: "Environmental Compliance Review", date: "2024-03-10", status: "Scheduled", findings: null },
-    { id: "3", name: "Supplier Code of Conduct Audit", date: "2023-11-22", status: "Completed", findings: 0 },
-    { id: "4", name: "Data Protection Assessment", date: "2024-01-05", status: "In Progress", findings: null },
-  ];
-  
-  // Mock data for tasks
-  const tasks = [
-    { id: "1", title: "Update ISO 27001 documentation", dueDate: "2024-03-25", priority: "High", assignee: "John Smith" },
-    { id: "2", title: "Complete DORA self-assessment", dueDate: "2024-04-15", priority: "Medium", assignee: "Sarah Johnson" },
-    { id: "3", title: "Review supplier certificates", dueDate: "2024-03-30", priority: "Medium", assignee: "Michael Brown" },
-    { id: "4", title: "Prepare for environmental audit", dueDate: "2024-04-05", priority: "High", assignee: "Emily Davis" },
-  ];
+  const [regulations, setRegulations] = useState<Regulation[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    (async () => {
+      try {
+        const regs = await apiClient.get<Regulation[]>(`/api/compliance/regulations?days=365`);
+        setRegulations(regs.data);
+        if (supplierId) {
+          const al = await apiClient.get<{ alerts: any[] }>(`/api/compliance/alerts/${supplierId}`);
+          setAlerts(al.data.alerts);
+        }
+      } catch (e: any) {
+        setError(e?.response?.data?.detail || "Failed to load compliance data");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [supplierId]);
   
   // Get status color
   const getStatusColor = (status: string) => {
@@ -70,8 +81,11 @@ export default function CompliancePage() {
           Track and manage regulatory compliance across your organization
         </p>
       </div>
+      {error && (
+        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">{error}</div>
+      )}
       
-      {/* Compliance Overview Cards */}
+      {/* Compliance Overview Cards (basic counts) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
           <div className="flex items-center">
@@ -82,7 +96,7 @@ export default function CompliancePage() {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Compliant</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">2/5</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">{Math.max(0, regulations.length - alerts.length)}/{regulations.length || 0}</p>
             </div>
           </div>
         </div>
@@ -96,7 +110,7 @@ export default function CompliancePage() {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">At Risk</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">1/5</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">{alerts.length}</p>
             </div>
           </div>
         </div>
@@ -110,7 +124,7 @@ export default function CompliancePage() {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">1/5</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">--</p>
             </div>
           </div>
         </div>
@@ -124,7 +138,7 @@ export default function CompliancePage() {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Not Started</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">1/5</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">--</p>
             </div>
           </div>
         </div>
@@ -142,19 +156,19 @@ export default function CompliancePage() {
                   : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               }`}
             >
-              Regulations
+              Regulations ({regulations.length})
             </button>
           </li>
           <li className="mr-2">
             <button
-              onClick={() => setActiveTab("audits")}
+              onClick={() => setActiveTab("alerts")}
               className={`inline-block py-4 px-4 text-sm font-medium ${
-                activeTab === "audits"
+                activeTab === "alerts"
                   ? "text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500"
                   : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               }`}
             >
-              Audits
+              Alerts ({alerts.length})
             </button>
           </li>
           <li>
@@ -179,26 +193,21 @@ export default function CompliancePage() {
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {regulations.map((regulation) => (
-                <li key={regulation.id}>
+                <li key={regulation._id}>
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">{regulation.name}</p>
-                        <p className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(regulation.status)}`}>
-                          {regulation.status}
-                        </p>
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">{regulation.regulation_title}</p>
                       </div>
                       <div className="ml-2 flex-shrink-0 flex">
                         <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-                          Due: {regulation.dueDate}
+                          Effective: {new Date(regulation.effective_date).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">
                       <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                          {regulation.description}
-                        </p>
+                        <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">{regulation.summary}</p>
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
                         <button className="text-blue-600 hover:text-blue-900 dark:text-blue-500 dark:hover:text-blue-400 mr-3">
@@ -215,45 +224,42 @@ export default function CompliancePage() {
             </ul>
           </div>
         )}
-        
-        {/* Audits Tab */}
-        {activeTab === 'audits' && (
+
+        {/* Alerts Tab */}
+        {activeTab === 'alerts' && (
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {audits.map((audit) => (
-                <li key={audit.id}>
+              {alerts.map((alert) => (
+                <li key={alert._id}>
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">{audit.name}</p>
-                        <p className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(audit.status)}`}>
-                          {audit.status}
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">{alert.regulation_title}</p>
+                        <p className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(alert.urgency)}`}>
+                          {alert.urgency}
                         </p>
                       </div>
                       <div className="ml-2 flex-shrink-0 flex">
                         <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-                          {audit.date}
+                          In {alert.days_until_effective} days
                         </p>
                       </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">
                       <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                          Findings: {audit.findings !== null ? audit.findings : "-"}
-                        </p>
+                        <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">{alert.summary}</p>
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
-                        <button className="text-blue-600 hover:text-blue-900 dark:text-blue-500 dark:hover:text-blue-400 mr-3">
-                          View
-                        </button>
-                        <button className="text-blue-600 hover:text-blue-900 dark:text-blue-500 dark:hover:text-blue-400">
-                          Download
-                        </button>
+                        <button className="text-blue-600 hover:text-blue-900 dark:text-blue-500 dark:hover:text-blue-400 mr-3">Dismiss</button>
+                        <button className="text-blue-600 hover:text-blue-900 dark:text-blue-500 dark:hover:text-blue-400">Details</button>
                       </div>
                     </div>
                   </div>
                 </li>
               ))}
+              {alerts.length === 0 && (
+                <li className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">No alerts for your supplier.</li>
+              )}
             </ul>
           </div>
         )}
