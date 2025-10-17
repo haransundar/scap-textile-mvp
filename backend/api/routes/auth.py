@@ -39,11 +39,30 @@ class Token(BaseModel):
     role: str
 
 # Helper functions
+def truncate_password(password: str) -> str:
+    """Truncate password to 72 bytes for bcrypt compatibility"""
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        # Truncate to 72 bytes, ensuring we don't cut in the middle of a multi-byte character
+        truncated = password_bytes[:72]
+        # Try to decode, if it fails, keep removing bytes until it works
+        while len(truncated) > 0:
+            try:
+                return truncated.decode('utf-8')
+            except UnicodeDecodeError:
+                truncated = truncated[:-1]
+        return ""
+    return password
+
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    # Truncate password to 72 bytes for bcrypt
+    truncated_password = truncate_password(plain_password)
+    return pwd_context.verify(truncated_password, hashed_password)
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    # Truncate password to 72 bytes for bcrypt
+    truncated_password = truncate_password(password)
+    return pwd_context.hash(truncated_password)
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
@@ -59,71 +78,89 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 @router.post("/register", response_model=Token)
 async def register_user(user: UserCreate):
     """Register a new user"""
-    db = get_database()
-    users_collection = db.users
-    
-    # Check if email already exists
-    existing_email = await users_collection.find_one({"email": user.email})
-    if existing_email:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Create new user
-    hashed_password = get_password_hash(user.password)
-    user_data = user.dict()
-    user_data["password"] = hashed_password
-    user_data["created_at"] = datetime.utcnow()
-    
-    result = await users_collection.insert_one(user_data)
-    user_id = str(result.inserted_id)
-    
-    # Create access token
-    access_token = create_access_token(
-        data={"sub": user.email, "id": user_id, "role": user.role}
-    )
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_id": user_id,
-        "email": user.email,
-        "role": user.role
-    }
+    try:
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=500, detail="Database not connected")
+        
+        users_collection = db.users
+        
+        # Check if email already exists
+        existing_email = await users_collection.find_one({"email": user.email})
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Create new user
+        hashed_password = get_password_hash(user.password)
+        user_data = user.dict()
+        user_data["password"] = hashed_password
+        user_data["created_at"] = datetime.utcnow()
+        
+        result = await users_collection.insert_one(user_data)
+        user_id = str(result.inserted_id)
+        
+        # Create access token
+        access_token = create_access_token(
+            data={"sub": user.email, "id": user_id, "role": user.role}
+        )
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user_id": user_id,
+            "email": user.email,
+            "role": user.role
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Registration error: {e}")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(login_data: UserLogin):
     """Login and get access token"""
-    db = get_database()
-    users_collection = db.users
-    
-    # Find user by email
-    user = await users_collection.find_one({"email": login_data.email})
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        db = get_database()
+        if db is None:
+            raise HTTPException(status_code=500, detail="Database not connected")
+        
+        users_collection = db.users
+        
+        # Find user by email
+        user = await users_collection.find_one({"email": login_data.email})
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Verify password
+        if not verify_password(login_data.password, user["password"]):
+            raise HTTPException(
+                status_code=401,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Create access token
+        access_token = create_access_token(
+            data={"sub": user["email"], "id": str(user["_id"]), "role": user["role"]}
         )
-    
-    # Verify password
-    if not verify_password(login_data.password, user["password"]):
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Create access token
-    access_token = create_access_token(
-        data={"sub": user["email"], "id": str(user["_id"]), "role": user["role"]}
-    )
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_id": str(user["_id"]),
-        "email": user["email"],
-        "role": user["role"]
-    }
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user_id": str(user["_id"]),
+            "email": user["email"],
+            "role": user["role"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Login error: {e}")
+        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
 
 @router.get("/me")
 async def read_users_me(token: str = Depends(oauth2_scheme)):

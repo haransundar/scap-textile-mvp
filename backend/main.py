@@ -38,10 +38,11 @@ app = FastAPI(
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", settings.FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Add error handlers
@@ -70,10 +71,15 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Detailed health check"""
+    from database.mongodb import mongodb
+    
+    db_status = "connected" if mongodb.db is not None else "disconnected"
+    
     return {
         "status": "healthy",
-        "database": "connected",
-        "environment": settings.ENVIRONMENT
+        "database": db_status,
+        "environment": settings.ENVIRONMENT,
+        "mongodb_uri": settings.MONGODB_URI.split("@")[-1] if "@" in settings.MONGODB_URI else "localhost:27017"
     }
 
 

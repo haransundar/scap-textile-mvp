@@ -15,10 +15,27 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer()
 
 
+def truncate_password(password: str) -> bytes:
+    """Truncate password to 72 bytes for bcrypt compatibility"""
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        # Truncate to 72 bytes, ensuring we don't cut in the middle of a multi-byte character
+        truncated = password_bytes[:72]
+        # Try to decode, if it fails, keep removing bytes until it works
+        while len(truncated) > 0:
+            try:
+                truncated.decode('utf-8')
+                return truncated
+            except UnicodeDecodeError:
+                truncated = truncated[:-1]
+        return b""
+    return password_bytes
+
+
 def hash_password(password: str) -> str:
     """Hash password using bcrypt"""
-    # Convert password to bytes and hash
-    password_bytes = password.encode('utf-8')
+    # Truncate password to 72 bytes for bcrypt
+    password_bytes = truncate_password(password)
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password_bytes, salt)
     return hashed.decode('utf-8')
@@ -26,7 +43,8 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify password against hash"""
-    password_bytes = plain_password.encode('utf-8')
+    # Truncate password to 72 bytes for bcrypt
+    password_bytes = truncate_password(plain_password)
     hashed_bytes = hashed_password.encode('utf-8')
     return bcrypt.checkpw(password_bytes, hashed_bytes)
 
