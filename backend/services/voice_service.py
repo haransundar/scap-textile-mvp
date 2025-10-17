@@ -1,23 +1,39 @@
 """
 Whisper AI service for speech-to-text conversion
 """
-import whisper
 import logging
 from typing import Dict
 import os
 
 logger = logging.getLogger(__name__)
 
+# Try to import whisper, but don't fail if not available
+try:
+    import whisper
+    WHISPER_AVAILABLE = True
+except ImportError:
+    WHISPER_AVAILABLE = False
+    logger.warning("⚠️ Whisper not installed. Voice transcription will not be available.")
+    logger.warning("   Install with: pip install openai-whisper")
+
 
 class VoiceService:
     def __init__(self):
         """Initialize Whisper model"""
+        self.model = None
+        
+        if not WHISPER_AVAILABLE:
+            logger.warning("⚠️ Whisper AI not available - voice features disabled")
+            return
+        
         try:
-            # Load base model (already downloaded)
+            # Load base model (will download on first use)
+            logger.info("🔄 Loading Whisper model (this may take a moment on first run)...")
             self.model = whisper.load_model("base")
             logger.info("✅ Whisper AI initialized (base model)")
         except Exception as e:
             logger.error(f"❌ Failed to initialize Whisper: {e}")
+            logger.error("   Make sure FFmpeg is installed: choco install ffmpeg")
             self.model = None
     
     def transcribe_audio(

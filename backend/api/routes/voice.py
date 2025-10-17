@@ -42,7 +42,7 @@ async def transcribe_audio(
     if not voice_service.model:
         raise HTTPException(
             status_code=503,
-            detail="Voice transcription service is not available"
+            detail="Voice transcription service is not available. Please install Whisper: pip install openai-whisper. Also ensure FFmpeg is installed: choco install ffmpeg"
         )
     
     # Validate file type
