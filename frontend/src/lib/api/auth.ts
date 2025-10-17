@@ -19,6 +19,16 @@ export interface AuthResponse {
   user_id: string;
   email: string;
   role: string;
+  supplier_id?: string; // Optional for backwards compatibility
+}
+
+export interface User {
+  _id: string;
+  email: string;
+  role: string;
+  full_name: string;
+  company_name?: string;
+  created_at: string;
 }
 
 export const authApi = {
@@ -32,8 +42,8 @@ export const authApi = {
     return response.data;
   },
   
-  getCurrentUser: async (): Promise<any> => {
-    const response = await apiClient.get('/api/auth/me');
+  getCurrentUser: async (): Promise<User> => {
+    const response = await apiClient.get<User>('/api/auth/me');
     return response.data;
   },
 };

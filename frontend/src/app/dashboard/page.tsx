@@ -29,32 +29,48 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!supplierId) return;
+    if (!supplierId) {
+      setIsLoading(false);
+      return;
+    }
+    
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
         // Risk score (calculates if missing)
-        const riskRes = await apiClient.get<RiskDoc>(`/api/risk/score/${supplierId}`);
-        setRiskScore({ score: riskRes.data.score, lastUpdated: riskRes.data.calculated_at });
+        try {
+          const riskRes = await apiClient.get<RiskDoc>(`/api/risk/score/${supplierId}`);
+          setRiskScore({ score: riskRes.data.score, lastUpdated: riskRes.data.calculated_at });
+        } catch (riskError: any) {
+          console.log('Risk score not available:', riskError.response?.status);
+          // Risk score might not exist yet, that's okay
+          setRiskScore(null);
+        }
 
         // Certificates list
-        const certRes = await apiClient.get<BackendCert[]>(`/api/documents/supplier/${supplierId}`);
-        const mapped: Certificate[] = certRes.data.map((c) => {
-          const expiry = c.expiry_date ? new Date(c.expiry_date) : null;
-          let status: Certificate['status'] = 'valid';
-          if (expiry) {
-            const days = Math.floor((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-            if (days < 0) status = 'expired';
-            else if (days < 30) status = 'expiring_soon';
-          }
-          return {
-            id: c._id,
-            name: `${c.type} ${c.number ? `• ${c.number}` : ''}`.trim(),
-            status,
-            expiryDate: expiry ? expiry.toISOString() : '',
-          };
-        });
-        setCertificates(mapped);
+        try {
+          const certRes = await apiClient.get<BackendCert[]>(`/api/documents/supplier/${supplierId}`);
+          const mapped: Certificate[] = certRes.data.map((c) => {
+            const expiry = c.expiry_date ? new Date(c.expiry_date) : null;
+            let status: Certificate['status'] = 'valid';
+            if (expiry) {
+              const days = Math.floor((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+              if (days < 0) status = 'expired';
+              else if (days < 30) status = 'expiring_soon';
+            }
+            return {
+              id: c._id,
+              name: `${c.type} ${c.number ? `• ${c.number}` : ''}`.trim(),
+              status,
+              expiryDate: expiry ? expiry.toISOString() : '',
+            };
+          });
+          setCertificates(mapped);
+        } catch (certError: any) {
+          console.log('Certificates not available:', certError.response?.status);
+          // No certificates yet, that's okay
+          setCertificates([]);
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -91,6 +107,17 @@ export default function DashboardPage() {
       day: 'numeric',
     });
   };
+
+  if (!user) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

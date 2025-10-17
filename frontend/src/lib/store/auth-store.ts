@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { authApi, AuthResponse } from '../api/auth';
+import { authApi, AuthResponse, User } from '../api/auth';
 
 interface AuthState {
-  user: AuthResponse | null;
+  user: (User & { supplier_id?: string }) | null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -23,7 +23,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await authApi.login({ email, password });
       localStorage.setItem('auth_token', response.access_token);
-      set({ user: response, isAuthenticated: true, isLoading: false });
+      
+      // Fetch full user data
+      const userData = await authApi.getCurrentUser();
+      const userWithSupplierId = {
+        ...userData,
+        supplier_id: userData._id // Use _id as supplier_id
+      };
+      
+      set({ user: userWithSupplierId, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.response?.data?.detail || 'Login failed', 
@@ -44,7 +52,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         role: role || 'supplier'
       });
       localStorage.setItem('auth_token', response.access_token);
-      set({ user: response as any, isAuthenticated: true, isLoading: false });
+      
+      // Fetch full user data
+      const userData = await authApi.getCurrentUser();
+      const userWithSupplierId = {
+        ...userData,
+        supplier_id: userData._id // Use _id as supplier_id
+      };
+      
+      set({ user: userWithSupplierId, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.response?.data?.detail || 'Registration failed', 
@@ -62,14 +78,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
-      set({ isAuthenticated: false });
+      set({ isAuthenticated: false, isLoading: false });
       return;
     }
 
     set({ isLoading: true });
     try {
-      const user = await authApi.getCurrentUser();
-      set({ user, isAuthenticated: true, isLoading: false });
+      const userData = await authApi.getCurrentUser();
+      const userWithSupplierId = {
+        ...userData,
+        supplier_id: userData._id // Use _id as supplier_id
+      };
+      set({ user: userWithSupplierId, isAuthenticated: true, isLoading: false });
     } catch (error) {
       localStorage.removeItem('auth_token');
       set({ user: null, isAuthenticated: false, isLoading: false });

@@ -13,22 +13,41 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, checkAuth, logout } = useAuthStore();
+  const { user, isAuthenticated, isLoading, checkAuth, logout } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState('en');
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     async function run() {
       await checkAuth();
+      setAuthChecked(true);
     }
     run();
   }, [checkAuth]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (authChecked && !isAuthenticated && !isLoading) {
       router.replace('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [authChecked, isAuthenticated, isLoading, router]);
+
+  // Show loading while checking auth
+  if (!authChecked || isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', current: pathname === '/dashboard' },
