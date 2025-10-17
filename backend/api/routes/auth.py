@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from typing import Optional
 
 from utils.config import settings
@@ -16,7 +16,6 @@ from database.mongodb import get_database
 router = APIRouter()
 
 # Security
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 # Models
@@ -35,34 +34,52 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user_id: str
-    username: str
+    email: str
     role: str
 
 # Helper functions
-def truncate_password(password: str) -> str:
+def truncate_password_bytes(password: str) -> bytes:
     """Truncate password to 72 bytes for bcrypt compatibility"""
+    if not password:
+        return b""
+    
     password_bytes = password.encode('utf-8')
-    if len(password_bytes) > 72:
-        # Truncate to 72 bytes, ensuring we don't cut in the middle of a multi-byte character
-        truncated = password_bytes[:72]
-        # Try to decode, if it fails, keep removing bytes until it works
-        while len(truncated) > 0:
-            try:
-                return truncated.decode('utf-8')
-            except UnicodeDecodeError:
-                truncated = truncated[:-1]
-        return ""
-    return password
+    if len(password_bytes) <= 72:
+        return password_bytes
+    
+    # Truncate to 72 bytes, ensuring we don't cut in the middle of a multi-byte character
+    truncated = password_bytes[:72]
+    # Try to decode, if it fails, keep removing bytes until it works
+    while len(truncated) > 0:
+        try:
+            truncated.decode('utf-8')
+            return truncated
+        except UnicodeDecodeError:
+            truncated = truncated[:-1]
+    return b""
 
-def verify_password(plain_password, hashed_password):
-    # Truncate password to 72 bytes for bcrypt
-    truncated_password = truncate_password(plain_password)
-    return pwd_context.verify(truncated_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify password against hash"""
+    try:
+        # Truncate password to 72 bytes for bcrypt
+        password_bytes = truncate_password_bytes(plain_password)
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except Exception as e:
+        print(f"Password verification error: {e}")
+        return False
 
-def get_password_hash(password):
-    # Truncate password to 72 bytes for bcrypt
-    truncated_password = truncate_password(password)
-    return pwd_context.hash(truncated_password)
+def get_password_hash(password: str) -> str:
+    """Hash password using bcrypt"""
+    try:
+        # Truncate password to 72 bytes for bcrypt
+        password_bytes = truncate_password_bytes(password)
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password_bytes, salt)
+        return hashed.decode('utf-8')
+    except Exception as e:
+        print(f"Password hashing error: {e}")
+        raise HTTPException(status_code=500, detail=f"Password hashing failed: {str(e)}")
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
@@ -167,15 +184,18 @@ async def read_users_me(token: str = Depends(oauth2_scheme)):
     """Get current user info"""
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
+        email = payload.get("sub")  # Changed from username to email
+        if email is None:
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     
-    db = await get_database()
+    db = get_database()  # Removed await - get_database() is not async
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    
     users_collection = db.users
-    user = await users_collection.find_one({"username": username})
+    user = await users_collection.find_one({"email": email})  # Changed from username to email
     
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")

@@ -84,6 +84,33 @@ Return ONLY the JSON object, no other text."""
         except Exception as e:
             logger.error(f"❌ Translation failed: {e}")
             return text  # Return original if translation fails
+    
+    def generate_compliance_response(self, query: str) -> str:
+        """
+        Generate compliance-related response using Gemini
+        
+        Args:
+            query: User's compliance question
+            
+        Returns:
+            AI-generated response
+        """
+        prompt = f"""You are a textile compliance expert assistant for SCAP (Supply Chain AI Compliance Platform).
+Answer the following question about textile compliance, certifications, or regulations.
+Provide clear, accurate, and actionable information.
+
+Question: {query}
+
+Answer:"""
+        
+        try:
+            response = self.model.generate_content(prompt)
+            answer = response.text.strip()
+            logger.info(f"✅ Generated compliance response ({len(answer)} chars)")
+            return answer
+        except Exception as e:
+            logger.error(f"❌ Compliance response generation failed: {e}")
+            raise
 
 
 # Global instance

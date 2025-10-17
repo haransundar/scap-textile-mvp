@@ -45,8 +45,8 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-blue-600">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <nav className="bg-blue-600 dark:bg-blue-800">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
@@ -61,8 +61,8 @@ export default function DashboardLayout({
                       href={item.href}
                       className={`${
                         item.current
-                          ? 'bg-blue-700 text-white'
-                          : 'text-white hover:bg-blue-500'
+                          ? 'bg-blue-700 dark:bg-blue-900 text-white'
+                          : 'text-white hover:bg-blue-500 dark:hover:bg-blue-700'
                       } rounded-md px-3 py-2 text-sm font-medium`}
                       aria-current={item.current ? 'page' : undefined}
                     >
@@ -81,10 +81,10 @@ export default function DashboardLayout({
                   <select
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="rounded-md border-0 bg-blue-500 py-1.5 pl-3 pr-10 text-white focus:ring-2 focus:ring-white"
+                    className="rounded-md border-0 bg-blue-500 dark:bg-blue-700 py-1.5 pl-3 pr-10 text-white focus:ring-2 focus:ring-white"
                   >
                     {languages.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
+                      <option key={lang.code} value={lang.code} className="bg-blue-500 dark:bg-blue-700">
                         {lang.name}
                       </option>
                     ))}
@@ -93,7 +93,7 @@ export default function DashboardLayout({
                 <div className="relative ml-3">
                   <button
                     type="button"
-                    className="flex max-w-xs items-center rounded-full bg-blue-500 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white"
+                    className="flex max-w-xs items-center rounded-full bg-blue-500 dark:bg-blue-700 text-sm text-white hover:bg-blue-600 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-white"
                     onClick={() => logout()}
                   >
                     <span className="px-3 py-1.5">Logout</span>
@@ -104,7 +104,7 @@ export default function DashboardLayout({
             <div className="-mr-2 flex md:hidden">
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-md bg-blue-700 p-2 text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white"
+                className="inline-flex items-center justify-center rounded-md bg-blue-700 dark:bg-blue-900 p-2 text-white hover:bg-blue-500 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 <span className="sr-only">Open main menu</span>
@@ -155,8 +155,8 @@ export default function DashboardLayout({
                   href={item.href}
                   className={`${
                     item.current
-                      ? 'bg-blue-700 text-white'
-                      : 'text-white hover:bg-blue-500'
+                      ? 'bg-blue-700 dark:bg-blue-900 text-white'
+                      : 'text-white hover:bg-blue-500 dark:hover:bg-blue-700'
                   } block rounded-md px-3 py-2 text-base font-medium`}
                   aria-current={item.current ? 'page' : undefined}
                 >
@@ -164,7 +164,7 @@ export default function DashboardLayout({
                 </Link>
               ))}
             </div>
-            <div className="border-t border-blue-700 pb-3 pt-4">
+            <div className="border-t border-blue-700 dark:border-blue-900 pb-3 pt-4">
               <div className="flex items-center px-5">
                 <div className="ml-3">
                   <div className="text-base font-medium text-white">
@@ -180,17 +180,17 @@ export default function DashboardLayout({
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="block w-full rounded-md border-0 bg-blue-500 py-1.5 pl-3 pr-10 text-white focus:ring-2 focus:ring-white"
+                  className="block w-full rounded-md border-0 bg-blue-500 dark:bg-blue-700 py-1.5 pl-3 pr-10 text-white focus:ring-2 focus:ring-white"
                 >
                   {languages.map((lang) => (
-                    <option key={lang.code} value={lang.code}>
+                    <option key={lang.code} value={lang.code} className="bg-blue-500 dark:bg-blue-700">
                       {lang.name}
                     </option>
                   ))}
                 </select>
                 <button
                   onClick={() => logout()}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-500"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-500 dark:hover:bg-blue-700"
                 >
                   Logout
                 </button>
@@ -200,7 +200,7 @@ export default function DashboardLayout({
         )}
       </nav>
 
-      <main>
+      <main className="bg-gray-100 dark:bg-gray-900">
         <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
           {children}
         </div>
