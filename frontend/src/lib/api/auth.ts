@@ -6,31 +6,34 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  // NOTE: Backend requires full SupplierCreate; this is a placeholder.
-  // Implement full registration form later. For now, keep minimal to plan UI.
   email: string;
   password: string;
+  full_name: string;
+  company_name?: string;
+  role?: string;
 }
 
 export interface AuthResponse {
   access_token: string;
   token_type: string;
-  supplier_id: string;
+  user_id: string;
+  email: string;
+  role: string;
 }
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/api/suppliers/login', credentials);
+    const response = await apiClient.post<AuthResponse>('/api/auth/login', credentials);
     return response.data;
   },
   
   register: async (data: RegisterData): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/api/suppliers/register', data);
+    const response = await apiClient.post<AuthResponse>('/api/auth/register', data);
     return response.data;
   },
   
   getCurrentUser: async (): Promise<any> => {
-    const response = await apiClient.get('/api/suppliers/me');
+    const response = await apiClient.get('/api/auth/me');
     return response.data;
   },
 };
