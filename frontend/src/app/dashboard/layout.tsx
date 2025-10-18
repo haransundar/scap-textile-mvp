@@ -64,8 +64,8 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      <nav className="bg-blue-600 dark:bg-blue-800">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      <nav className="bg-blue-600 dark:bg-blue-800 shadow-md">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
@@ -219,8 +219,8 @@ export default function DashboardLayout({
         )}
       </nav>
 
-      <main className="bg-gray-100 dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <main>
+        <div className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
           {children}
         </div>
       </main>
