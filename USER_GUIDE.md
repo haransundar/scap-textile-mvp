@@ -28,9 +28,9 @@ POST /api/suppliers/register
 {
   "name": "Priya Textiles",
   "tier": 2,
-  "contact_person": "Priya Kumar",
-  "email": "priya@priyatextiles.com",
-  "password": "SecurePass123",
+  "contact_person": "Test User",
+  "email": "test@example.com",
+  "password": "YourSecurePassword123!",
   "phone": "9876543210",
   "address": {
     "street": "123 Textile Street",
@@ -52,8 +52,8 @@ POST /api/suppliers/register
 ```
 POST /api/suppliers/login
 {
-  "email": "priya@priyatextiles.com",
-  "password": "SecurePass123"
+  "email": "test@example.com",
+  "password": "YourSecurePassword123!"
 }
 ```
 

@@ -238,9 +238,9 @@ Expected response:
 ### Environment Variables (.env)
 ```env
 # AI Services
-GOOGLE_AI_API_KEY=AIzaSyC7akfc_HNNJbx3nbL4bZrO0--1fI1u2ss
-GROQ_API_KEY=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
-OPENROUTER_API_KEY=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
+GOOGLE_AI_API_KEY=your_google_ai_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
+OPENROUTER_API_KEY=your_openrouter_api_key_here
 
 # Database
 MONGODB_URI=mongodb://localhost:27017/scap_local

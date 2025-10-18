@@ -278,7 +278,7 @@ GROQ_API_KEY=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
 ### Gemini Fallback Not Working
 **Solution**: Check Gemini API key
 ```env
-GOOGLE_AI_API_KEY=AIzaSyC7akfc_HNNJbx3nbL4bZrO0--1fI1u2ss
+GOOGLE_AI_API_KEY=your_google_ai_api_key_here
 ```
 
 ### Dark Mode Not Working

@@ -121,8 +121,8 @@ python scripts/seed_data.py
 ✅ Created 2 regulations
 
 Test credentials:
-  Email: priya@priyatextiles.com
-  Password: password123
+  Email: [your-test-email]@example.com
+  Password: [your-test-password]
 ```
 
 **Status:** [ ] Pass [ ] Fail
@@ -256,12 +256,12 @@ Open browser: http://localhost:8000/docs
 # Register
 curl -X POST http://localhost:8000/api/suppliers/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"Test","email":"test@test.com","password":"Test1234","tier":2,"phone":"9876543210"}'
+  -d '{"name":"Test","email":"test@example.com","password":"[your-test-password]","tier":2,"phone":"0000000000"}'
 
 # Login
 curl -X POST http://localhost:8000/api/suppliers/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@test.com","password":"Test1234"}'
+  -d '{"email":"test@example.com","password":"[your-test-password]"}'
 ```
 
 **Expected:**

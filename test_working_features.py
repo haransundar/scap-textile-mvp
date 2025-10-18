@@ -37,8 +37,8 @@ def test_register_user():
     print_section("2. Testing User Registration")
     try:
         user_data = {
-            "email": f"test_{datetime.now().timestamp()}@example.com",
-            "password": "TestPassword123!",
+            "email": f"test_{int(datetime.now().timestamp())}@example.com",
+            "password": os.getenv('TEST_PASSWORD', 'TestPassword123!'),
             "full_name": "Test User",
             "company_name": "Test Company"
         }
