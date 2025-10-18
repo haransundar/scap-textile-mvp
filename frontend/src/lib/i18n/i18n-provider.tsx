@@ -6,8 +6,11 @@ type Locale = "en" | "ta" | "hi";
 
 type Messages = Record<string, string>;
 
+const SUPPORTED_LOCALES = ["en", "ta", "hi"] as const;
+
 type I18nContextType = {
   locale: Locale;
+  locales: readonly string[];
   setLocale: (l: Locale) => void;
   t: (key: string) => string;
 };
@@ -43,7 +46,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     return (key: string) => messages[key] ?? key;
   }, [messages]);
 
-  const value = useMemo(() => ({ locale, setLocale, t }), [locale, t]);
+  const value = useMemo(() => ({
+    locale,
+    locales: SUPPORTED_LOCALES,
+    setLocale,
+    t
+  }), [locale, t]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

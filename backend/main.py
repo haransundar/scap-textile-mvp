@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from api.routes import suppliers, documents, compliance, risk, chat, auth, voice
+from api.routes import suppliers, documents, compliance, risk, chat, auth, voice, certificates
 from api.middleware.error_handler import add_error_handlers
 from database.mongodb import connect_db, close_db
 from utils.config import settings
@@ -36,13 +36,40 @@ app = FastAPI(
 )
 
 # CORS Configuration
+# Define allowed origins with fallbacks
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    settings.FRONTEND_URL,
+    str(settings.FRONTEND_URL).rstrip('/'),
+]
+
+# Remove any None or empty values
+allowed_origins = [origin for origin in allowed_origins if origin and str(origin).strip()]
+
+# Add CORS middleware with the allowed origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", settings.FRONTEND_URL],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+        "Access-Control-Allow-Origin",
+        "Access-Control-Allow-Credentials"
+    ],
+    expose_headers=[
+        "Content-Disposition",
+        "Content-Length",
+        "X-Total-Count"
+    ],
+    max_age=600,  # Cache preflight requests for 10 minutes
 )
 
 # Add error handlers
@@ -56,6 +83,7 @@ app.include_router(compliance.router, prefix="/api/compliance", tags=["Complianc
 app.include_router(risk.router, prefix="/api/risk", tags=["Risk"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(voice.router, prefix="/api/voice", tags=["Voice"])
+app.include_router(certificates.router, prefix="/api/certificates", tags=["Certificates"])
 
 
 @app.get("/")

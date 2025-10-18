@@ -66,30 +66,94 @@ def create_access_token(data: dict) -> str:
 def decode_access_token(token: str) -> dict:
     """Decode and verify JWT token"""
     try:
+        if not token:
+            raise JWTError("Empty token provided")
+            
         payload = jwt.decode(
             token,
             settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
+            algorithms=[settings.JWT_ALGORITHM],
+            options={
+                "require": ["exp", "sub"],  # Require expiration and subject
+                "verify_exp": True,          # Verify expiration
+                "verify_aud": False,         # Disable audience verification
+                "verify_iss": False,         # Disable issuer verification
+            }
         )
         return payload
-    except JWTError as e:
-        logger.error(f"JWT decode error: {e}")
+        
+    except jwt.ExpiredSignatureError:
+        logger.warning("Token has expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials"
+            detail="Token has expired"
+        )
+    except jwt.JWTClaimsError as e:
+        logger.warning(f"Token claims error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token claims"
+        )
+    except JWTError as e:
+        logger.warning(f"JWT decode error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error decoding token: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error processing authentication"
         )
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """Get current authenticated user from JWT token"""
-    token = credentials.credentials
-    payload = decode_access_token(token)
-    
-    user_id = payload.get("sub")
-    if user_id is None:
+    try:
+        if not credentials or not credentials.credentials:
+            logger.warning("No credentials provided")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="No authentication token provided"
+            )
+            
+        token = credentials.credentials
+        if not token:
+            logger.warning("Empty token provided")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="No authentication token provided"
+            )
+            
+        payload = decode_access_token(token)
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            logger.warning("No user ID in token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload"
+            )
+            
+        # Check if token is about to expire soon (in 5 minutes)
+        exp = payload.get("exp")
+        if exp and datetime.utcnow().timestamp() > (exp - 300):  # 5 minutes buffer
+            logger.info(f"Token for user {user_id} is about to expire")
+            # You might want to implement token refresh logic here
+            
+        return {
+            "user_id": user_id, 
+            "email": payload.get("email"),
+            "token": token  # Return the token for potential reuse
+        }
+        
+    except HTTPException as http_exc:
+        # Re-raise HTTP exceptions
+        raise http_exc
+    except Exception as e:
+        logger.error(f"Authentication error: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during authentication"
         )
-    
-    return {"user_id": user_id, "email": payload.get("email")}

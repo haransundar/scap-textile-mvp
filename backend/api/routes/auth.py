@@ -16,7 +16,7 @@ from database.mongodb import get_database
 router = APIRouter()
 
 # Security
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # Models
 class UserCreate(BaseModel):
@@ -182,26 +182,68 @@ async def login_for_access_token(login_data: UserLogin):
 @router.get("/me")
 async def read_users_me(token: str = Depends(oauth2_scheme)):
     """Get current user info"""
+    print(f"[AUTH] /me endpoint called with token: {token[:20]}...")
+    
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        email = payload.get("sub")  # Changed from username to email
-        if email is None:
-            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+        # Decode the token
+        print("[AUTH] Decoding token...")
+        payload = jwt.decode(
+            token, 
+            settings.JWT_SECRET_KEY, 
+            algorithms=[settings.JWT_ALGORITHM]
+        )
+        print(f"[AUTH] Token payload: {payload}")
+        
+        email = payload.get("sub")
+        if not email:
+            print("[AUTH] No email in token payload")
+            raise HTTPException(
+                status_code=401, 
+                detail="Invalid authentication credentials: No email in token"
+            )
+            
+    except JWTError as e:
+        print(f"[AUTH] JWT Error: {str(e)}")
+        raise HTTPException(
+            status_code=401, 
+            detail=f"Invalid authentication token: {str(e)}"
+        )
     
-    db = get_database()  # Removed await - get_database() is not async
-    if db is None:
-        raise HTTPException(status_code=500, detail="Database not connected")
-    
-    users_collection = db.users
-    user = await users_collection.find_one({"email": email})  # Changed from username to email
-    
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Remove password from response
-    user.pop("password", None)
-    user["_id"] = str(user["_id"])
-    
-    return user
+    try:
+        print(f"[AUTH] Getting database connection...")
+        db = get_database()
+        if not db:
+            print("[AUTH] Database connection failed")
+            raise HTTPException(
+                status_code=500, 
+                detail="Database connection failed"
+            )
+        
+        print(f"[AUTH] Querying user with email: {email}")
+        users_collection = db.users
+        user = await users_collection.find_one({"email": email})
+        
+        if not user:
+            print(f"[AUTH] User not found with email: {email}")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"User with email {email} not found"
+            )
+        
+        # Convert ObjectId to string for JSON serialization
+        user["_id"] = str(user["_id"])
+        
+        # Remove sensitive data
+        user.pop("password", None)
+        
+        print(f"[AUTH] Successfully retrieved user: {user.get('email')}")
+        return user
+        
+    except Exception as e:
+        print(f"[AUTH] Error in /me endpoint: {str(e)}")
+        if not isinstance(e, HTTPException):
+            raise HTTPException(
+                status_code=500, 
+                detail=f"An error occurred while fetching user data: {str(e)}"
+            )
+        raise

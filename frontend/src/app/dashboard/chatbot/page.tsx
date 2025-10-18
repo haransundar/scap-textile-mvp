@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import apiClient from '@/lib/api/client';
 import { useI18n } from '@/lib/i18n/i18n-provider';
 import VoiceRecorder from '@/components/voice-recorder';
+
+type Locale = 'en' | 'ta' | 'hi';
 
 interface Message {
   id: string;
@@ -25,7 +28,7 @@ export default function ChatbotPage() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [language, setLanguage] = useState(locale);
+  const [language, setLanguage] = useState<Locale>(locale as Locale);
   const [useReasoning, setUseReasoning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -108,7 +111,7 @@ export default function ChatbotPage() {
               <select
                 id="language"
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => setLanguage(e.target.value as Locale)}
                 className="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white py-1 pl-2 pr-8 text-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="en">English</option>
@@ -142,12 +145,30 @@ export default function ChatbotPage() {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${
+              className={`flex items-start gap-3 ${
                 message.sender === 'user' ? 'justify-end' : 'justify-start'
               }`}
             >
+              {message.sender === 'bot' && (
+                <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-900 border-2 border-blue-200 dark:border-blue-700">
+                  <div className="relative h-full w-full">
+                    <Image 
+                      src="/branding/mascot/linky-avatar.png" 
+                      alt="Linky the SCAP Assistant"
+                      fill
+                      sizes="32px"
+                      className="object-cover"
+                      priority
+                    />
+                  </div>
+                </div>
+              )}
               <div
                 className={`max-w-[75%] rounded-lg px-4 py-2 ${
+                  message.sender === 'user' 
+                    ? 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100 rounded-tr-none' 
+                    : 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100 rounded-tl-none'
+                } ${
                   message.sender === 'user'
                     ? 'bg-blue-600 dark:bg-blue-700 text-white'
                     : message.isReasoning

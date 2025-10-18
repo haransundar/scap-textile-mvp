@@ -1,0 +1,190 @@
+---
+title: RiskGauge Component
+id: risk-gauge
+description: A visual gauge component that displays risk scores with color-coded indicators and trend information.
+---
+
+# RiskGauge
+
+A circular gauge component that visually represents risk scores with color-coded indicators, trend information, and interactive tooltips.
+
+## Features
+
+- Visual representation of risk scores from 0 to 10
+- Color-coded risk levels (low, medium, high)
+- Trend indicators (increasing, decreasing, stable)
+- Responsive sizing options
+- Loading and error states
+- Built-in error boundaries
+
+## Installation
+
+```bash
+# If not already installed
+npm install framer-motion
+```
+
+## Import
+
+```tsx
+import { RiskGauge } from '@/components/risk/RiskGauge';
+```
+
+## Usage
+
+### Basic Usage
+
+```tsx
+<RiskGauge 
+  score={6.5} 
+  level="medium" 
+  trend="decreasing"
+  lastUpdated="2023-10-15T14:30:00Z"
+/>
+```
+
+### With Loading State
+
+```tsx
+<RiskGauge 
+  score={6.5} 
+  level="medium" 
+  trend="decreasing"
+  isLoading={true}
+/>
+```
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `score` | `number` | Yes | - | The risk score to display (0-10) |
+| `level` | `'low' | 'medium' | 'high'` | Yes | The risk level that determines the color scheme |
+| `trend` | `'increasing' | 'decreasing' | 'stable'` | No | `'stable'` | The trend direction of the risk score |
+| `lastUpdated` | `string` | No | - | ISO date string of when the score was last updated |
+| `size` | `'sm' | 'md' | 'lg'` | No | `'md'` | The size of the gauge |
+| `className` | `string` | No | - | Additional CSS classes |
+| `isLoading` | `boolean` | No | `false` | Shows a loading skeleton when true |
+
+## Sizes
+
+The component comes in three sizes:
+
+- `sm` (120px) - For compact spaces and data-dense UIs
+- `md` (200px) - Default size for most dashboards
+- `lg` (280px) - For prominent display on overview pages
+
+## Styling
+
+The component uses Tailwind CSS for styling. You can customize the appearance by passing a `className` prop or by using the following CSS variables:
+
+```css
+:root {
+  --risk-gauge-stroke-width: 14px;
+  --risk-gauge-track-color: #e5e7eb;
+  --risk-gauge-low-color: #10b981;
+  --risk-gauge-medium-color: #f59e0b;
+  --risk-gauge-high-color: #ef4444;
+}
+```
+
+## Error Handling
+
+The component includes a built-in error boundary that catches and displays errors gracefully. You can also provide a custom fallback UI:
+
+```tsx
+<RiskGauge 
+  score={6.5}
+  level="medium"
+  fallback={({ error, resetError }) => (
+    <div className="error-fallback">
+      <p>Failed to load risk data</p>
+      <button onClick={resetError}>Retry</button>
+    </div>
+  )}
+/>
+```
+
+## Examples
+
+### Different Sizes
+
+```tsx
+<div className="flex flex-wrap gap-4">
+  <RiskGauge score={3} level="low" size="sm" />
+  <RiskGauge score={6} level="medium" size="md" />
+  <RiskGauge score={9} level="high" size="lg" />
+</div>
+```
+
+### With Custom Styling
+
+```tsx
+<RiskGauge 
+  score={7.5} 
+  level="high" 
+  trend="increasing"
+  className="border-2 border-gray-200 rounded-lg p-4"
+  style={{
+    '--risk-gauge-stroke-width': '16px',
+    '--risk-gauge-high-color': '#dc2626',
+  }}
+/>
+```
+
+## Accessibility
+
+The component includes the following accessibility features:
+
+- ARIA labels for screen readers
+- Keyboard navigation support
+- High contrast mode support
+- Reduced motion support
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+- Mobile Safari (iOS 13+)
+- Chrome for Android
+
+## Performance
+
+The component is optimized for performance with:
+
+- Memoization of expensive calculations
+- Efficient re-renders with React.memo
+- Lazy loading of non-essential assets
+- Optimized animations with Framer Motion
+
+## Troubleshooting
+
+### Gauge not updating
+
+If the gauge doesn't update when props change, ensure you're using the `key` prop to force a re-render:
+
+```tsx
+<RiskGauge 
+  key={`${score}-${level}`}
+  score={score}
+  level={level}
+/>
+```
+
+### Animation issues
+
+If you experience animation glitches, try adding the following CSS:
+
+```css
+.risk-gauge {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+```
+
+## License
+
+MIT

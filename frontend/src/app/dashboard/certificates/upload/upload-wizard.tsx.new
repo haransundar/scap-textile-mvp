@@ -1,0 +1,678 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { Upload, FileText, X, Check, AlertCircle, Loader2, Camera } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/components/ui/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+
+// Validation schema
+const certificateSchema = z.object({
+  // Step 1: File upload
+  file: z.any().refine((file) => file instanceof File, 'Certificate file is required'),
+  
+  // Step 2: Certificate details
+  name: z.string().min(1, 'Certificate name is required'),
+  certificateNumber: z.string().min(1, 'Certificate number is required'),
+  certificateType: z.string().min(1, 'Certificate type is required'),
+  issuer: z.string().min(1, 'Issuer name is required'),
+  issuedTo: z.string().min(1, 'Issued to field is required'),
+  issuedDate: z.string().min(1, 'Issued date is required'),
+  expiryDate: z.string().min(1, 'Expiry date is required'),
+  scope: z.string().optional(),
+  description: z.string().optional(),
+  
+  // Step 3: Review
+  termsAccepted: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
+});
+
+type CertificateFormValues = z.infer<typeof certificateSchema>;
+
+// Certificate types for the dropdown
+const CERTIFICATE_TYPES = [
+  'ISO 9001',
+  'ISO 14001',
+  'ISO 45001',
+  'GOTS',
+  'OCS',
+  'Fair Trade',
+  'BSCI',
+  'SMETA',
+  'Other',
+];
+
+// Steps configuration
+const steps = [
+  { id: 'upload', title: 'Upload Certificate' },
+  { id: 'details', title: 'Enter Details' },
+  { id: 'review', title: 'Review & Submit' },
+];
+
+export default function UploadCertificateWizard() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Form state
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    trigger,
+  } = useForm<CertificateFormValues>({
+    resolver: zodResolver(certificateSchema),
+    defaultValues: {
+      termsAccepted: false,
+    },
+  });
+
+  // Component state
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isProcessingOcr, setIsProcessingOcr] = useState(false);
+  const [ocrResult, setOcrResult] = useState<{ text: string; confidence: number } | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Form values
+  const file = watch('file');
+  const certificateType = watch('certificateType');
+  const name = watch('name');
+  const certificateNumber = watch('certificateNumber');
+  const issuer = watch('issuer');
+  const issuedTo = watch('issuedTo');
+  const issuedDate = watch('issuedDate');
+  const expiryDate = watch('expiryDate');
+  const scope = watch('scope');
+  const description = watch('description');
+  const termsAccepted = watch('termsAccepted');
+
+  // Navigation functions
+  const nextStep = async () => {
+    // Validate current step before proceeding
+    const fieldsToValidate = steps[currentStep].id === 'upload' 
+      ? ['file'] 
+      : steps[currentStep].id === 'details' 
+        ? ['name', 'certificateNumber', 'certificateType', 'issuer', 'issuedTo', 'issuedDate', 'expiryDate']
+        : ['termsAccepted'];
+    
+    const isValid = await trigger(fieldsToValidate as any);
+    if (isValid && currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // File handling
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      processFile(e.target.files[0]);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const processFile = (file: File) => {
+    // Validate file type
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload a PDF, JPEG, or PNG file.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Set file in form
+    setValue('file', file);
+    
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFilePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+
+    // Simulate OCR processing
+    setIsProcessingOcr(true);
+    setTimeout(() => {
+      setOcrResult({
+        text: 'Certificate details extracted successfully!',
+        confidence: 0.95,
+      });
+      
+      // Auto-fill some fields (simulated OCR data)
+      setValue('name', 'ISO 9001:2015 Quality Management System');
+      setValue('certificateNumber', 'CERT-2023-12345');
+      setValue('certificateType', 'ISO 9001');
+      setValue('issuer', 'International Organization for Standardization');
+      setValue('issuedTo', 'Sample Company Inc.');
+      setValue('issuedDate', '2023-01-15');
+      setValue('expiryDate', '2026-01-14');
+      
+      setIsProcessingOcr(false);
+    }, 2000);
+  };
+
+  const removeFile = () => {
+    setValue('file', undefined as any);
+    setFilePreview(null);
+    setOcrResult(null);
+  };
+
+  // Form submission
+  const onSubmit = async (data: CertificateFormValues) => {
+    setIsUploading(true);
+    
+    try {
+      // TODO: Implement actual API call to upload certificate
+      console.log('Submitting certificate:', data);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      toast({
+        title: 'Success!',
+        description: 'Certificate uploaded successfully.',
+      });
+      
+      // Redirect to certificates list
+      router.push('/dashboard/certificates');
+    } catch (error) {
+      console.error('Error uploading certificate:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to upload certificate. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Render step 1: File upload
+  const renderUploadStep = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">Upload Certificate</h3>
+        <p className="text-sm text-muted-foreground">
+          Upload a scanned copy or photo of your certificate (PDF, JPG, or PNG)
+        </p>
+      </div>
+      
+      <Tabs defaultValue="upload" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="upload">Upload File</TabsTrigger>
+          <TabsTrigger value="camera">Take Photo</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upload" className="mt-4">
+          <div 
+            className={cn(
+              'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer',
+              isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25',
+              file ? 'border-primary' : ''
+            )}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={handleFileChange}
+            />
+            
+            {file ? (
+              <div className="space-y-2">
+                <FileText className="h-10 w-10 mx-auto text-primary" />
+                <p className="font-medium">{file.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile();
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" /> Remove
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Drag and drop your file here</p>
+                  <p className="text-sm text-muted-foreground">
+                    or click to browse files (PDF, JPG, PNG up to 10MB)
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="camera" className="mt-4">
+          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+            <Camera className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+            <p className="font-medium">Camera Access Required</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Allow camera access to take a photo of your certificate
+            </p>
+            <Button variant="outline" disabled>
+              <Camera className="h-4 w-4 mr-2" /> Open Camera
+            </Button>
+            <p className="text-xs text-muted-foreground mt-4">
+              Note: Camera capture is not available in all browsers. For best results, use Chrome or Edge.
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
+      
+      {isProcessingOcr && (
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Processing document... This may take a moment.</span>
+        </div>
+      )}
+      
+      {ocrResult && (
+        <div className="mt-4 p-4 bg-muted/10 rounded-md">
+          <div className="flex items-center space-x-2 text-sm font-medium mb-2">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            <span>Document processed successfully</span>
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full ml-auto">
+              {Math.round(ocrResult.confidence * 100)}% confidence
+            </span>
+          </div>
+          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono whitespace-pre-wrap overflow-auto max-h-40">
+            {ocrResult.text}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Render step 2: Certificate details
+  const renderDetailsStep = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">Certificate Details</h3>
+        <p className="text-sm text-muted-foreground">
+          Review and edit the extracted information from your certificate.
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Certificate Name *</Label>
+            <Input
+              id="name"
+              {...register('name')}
+              placeholder="e.g., ISO 9001:2015 Certification"
+              disabled={isUploading}
+              className={errors.name ? 'border-red-500' : ''}
+            />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="certificateNumber">Certificate Number *</Label>
+            <Input
+              id="certificateNumber"
+              {...register('certificateNumber')}
+              placeholder="e.g., CERT-2023-12345"
+              disabled={isUploading}
+              className={errors.certificateNumber ? 'border-red-500' : ''}
+            />
+            {errors.certificateNumber && (
+              <p className="text-sm text-red-500">{errors.certificateNumber.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="certificateType">Certificate Type *</Label>
+            <select
+              id="certificateType"
+              {...register('certificateType')}
+              disabled={isUploading}
+              className={cn(
+                'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                errors.certificateType ? 'border-red-500' : ''
+              )}
+            >
+              <option value="">Select a certificate type</option>
+              {CERTIFICATE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            {errors.certificateType && (
+              <p className="text-sm text-red-500">{errors.certificateType.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="issuer">Issuer *</Label>
+            <Input
+              id="issuer"
+              {...register('issuer')}
+              placeholder="e.g., International Organization for Standardization"
+              disabled={isUploading}
+              className={errors.issuer ? 'border-red-500' : ''}
+            />
+            {errors.issuer && (
+              <p className="text-sm text-red-500">{errors.issuer.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="issuedTo">Issued To *</Label>
+            <Input
+              id="issuedTo"
+              {...register('issuedTo')}
+              placeholder="e.g., Your Company Name"
+              disabled={isUploading}
+              className={errors.issuedTo ? 'border-red-500' : ''}
+            />
+            {errors.issuedTo && (
+              <p className="text-sm text-red-500">{errors.issuedTo.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="issuedDate">Issued Date *</Label>
+            <Input
+              id="issuedDate"
+              type="date"
+              {...register('issuedDate')}
+              disabled={isUploading}
+              className={errors.issuedDate ? 'border-red-500' : ''}
+            />
+            {errors.issuedDate && (
+              <p className="text-sm text-red-500">{errors.issuedDate.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="expiryDate">Expiry Date *</Label>
+            <Input
+              id="expiryDate"
+              type="date"
+              {...register('expiryDate')}
+              disabled={isUploading}
+              className={errors.expiryDate ? 'border-red-500' : ''}
+            />
+            {errors.expiryDate && (
+              <p className="text-sm text-red-500">{errors.expiryDate.message}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="scope">Scope (Optional)</Label>
+            <Input
+              id="scope"
+              {...register('scope')}
+              placeholder="e.g., Manufacturing of textile products"
+              disabled={isUploading}
+            />
+          </div>
+          
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="description">Description (Optional)</Label>
+            <textarea
+              id="description"
+              {...register('description')}
+              rows={3}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Any additional details about this certificate..."
+              disabled={isUploading}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render step 3: Review & Submit
+  const renderReviewStep = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">Review & Submit</h3>
+        <p className="text-sm text-muted-foreground">
+          Please review all the information before submitting your certificate.
+        </p>
+      </div>
+      
+      <div className="space-y-6">
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-muted/50 px-4 py-3 border-b">
+            <h4 className="font-medium">Certificate Information</h4>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Certificate Name</p>
+                <p className="font-medium">{name || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Certificate Number</p>
+                <p className="font-medium">{certificateNumber || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Certificate Type</p>
+                <p className="font-medium">{certificateType || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Issuer</p>
+                <p className="font-medium">{issuer || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Issued To</p>
+                <p className="font-medium">{issuedTo || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Issued Date</p>
+                <p className="font-medium">
+                  {issuedDate ? format(new Date(issuedDate), 'PPP') : 'Not provided'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Expiry Date</p>
+                <p className="font-medium">
+                  {expiryDate ? format(new Date(expiryDate), 'PPP') : 'Not provided'}
+                </p>
+              </div>
+              {scope && (
+                <div className="md:col-span-2">
+                  <p className="text-sm text-muted-foreground">Scope</p>
+                  <p className="font-medium">{scope}</p>
+                </div>
+              )}
+              {description && (
+                <div className="md:col-span-2">
+                  <p className="text-sm text-muted-foreground">Description</p>
+                  <p className="whitespace-pre-line">{description}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex items-start space-x-2">
+            <input
+              type="checkbox"
+              id="termsAccepted"
+              {...register('termsAccepted')}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <Label htmlFor="termsAccepted" className="text-sm">
+              I certify that the information provided is accurate and I have the right to upload this certificate.
+              {errors.termsAccepted && (
+                <p className="text-sm text-red-500 mt-1">{errors.termsAccepted.message}</p>
+              )}
+            </Label>
+          </div>
+          
+          <div className="bg-muted/50 p-4 rounded-md">
+            <p className="text-sm text-muted-foreground">
+              By submitting this form, you agree to our{' '}
+              <a href="/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a href="/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                Privacy Policy
+              </a>
+              .
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-8">
+      {/* Progress indicator */}
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <h2 className="text-2xl font-bold tracking-tight">Upload New Certificate</h2>
+          <span className="text-sm text-muted-foreground">
+            Step {currentStep + 1} of {steps.length}
+          </span>
+        </div>
+        
+        <div className="relative pt-1">
+          <div className="flex mb-2 items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-primary/10">
+                {steps[currentStep]?.title}
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-xs font-semibold inline-block text-primary">
+                {Math.round(((currentStep + 1) / steps.length) * 100)}%
+              </span>
+            </div>
+          </div>
+          <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-muted">
+            <div
+              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary transition-all duration-500"
+            ></div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Step content */}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              {steps[currentStep]?.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {currentStep === 0 && renderUploadStep()}
+            {currentStep === 1 && renderDetailsStep()}
+            {currentStep === 2 && renderReviewStep()}
+          </CardContent>
+          
+          {/* Navigation buttons */}
+          <div className="flex items-center justify-between p-6 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 0 || isUploading}
+            >
+              Back
+            </Button>
+            
+            {currentStep < steps.length - 1 ? (
+              <Button
+                type="button"
+                onClick={nextStep}
+                disabled={isProcessingOcr || isUploading}
+              >
+                {isProcessingOcr ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Next'
+                )}
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={isUploading}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Certificate'
+                )}
+              </Button>
+            )}
+          </div>
+        </Card>
+      </form>
+      
+      {/* Help text */}
+      <div className="text-center text-sm text-muted-foreground">
+        <p>Need help? Contact our support team at support@example.com</p>
+      </div>
+    </div>
+  );
+}

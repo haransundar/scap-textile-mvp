@@ -19,6 +19,32 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SCAP - Supply Chain AI Compliance Platform",
   description: "AI-powered supply chain compliance management platform",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  icons: {
+    icon: [
+      { url: '/favicon.png', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/branding/favicons/scap-icon.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/branding/favicons/scap-icon.png' },
+    ],
+    shortcut: ['/favicon.png'],
+  },
+  openGraph: {
+    images: [
+      {
+        url: '/branding/social/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SCAP - Supply Chain AI Compliance Platform',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/branding/social/og-image.png'],
+  },
 };
 
 export default function RootLayout({

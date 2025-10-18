@@ -34,6 +34,23 @@ class Settings(BaseSettings):
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
     
+    # Storage Configuration
+    STORAGE_TYPE: str = "local"  # 's3' or 'local'
+    
+    # S3 Configuration
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    AWS_REGION: str = "us-east-1"
+    S3_BUCKET_NAME: str = "scap-documents"
+    
+    # Local Storage Configuration
+    LOCAL_STORAGE_PATH: str = "data/uploads"
+    BASE_URL: str = "http://localhost:8000"
+    
+    # File Upload Settings
+    MAX_FILE_SIZE_MB: int = 10  # 10MB max file size
+    ALLOWED_FILE_TYPES: list = ["application/pdf", "image/jpeg", "image/png"]
+    
     class Config:
         env_file = ".env"
         env_file_encoding = 'utf-8'

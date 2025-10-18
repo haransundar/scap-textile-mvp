@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -70,7 +71,22 @@ export default function DashboardLayout({
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <span className="text-white text-xl font-bold">SCAP</span>
+                <Link href="/dashboard" className="flex items-center hover:opacity-90 transition-opacity">
+                  <div className="relative h-10 w-10 flex-shrink-0 flex items-center justify-center bg-white rounded-full shadow-md">
+                    <Image 
+                      src="/branding/favicons/scap-icon.png"
+                      alt="SCAP Logo"
+                      width={24}
+                      height={24}
+                      className="object-contain p-0.5"
+                      priority
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <div className="text-xl font-bold tracking-tight text-white">SCAP</div>
+                    <div className="text-xs text-blue-100">Supply Chain AI Compliance Platform</div>
+                  </div>
+                </Link>
               </div>
               <div className="hidden md:block">
                 <div className="ml-10 flex items-baseline space-x-4">
