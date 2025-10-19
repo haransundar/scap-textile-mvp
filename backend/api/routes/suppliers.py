@@ -5,52 +5,14 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from datetime import datetime
 from bson import ObjectId
-from pydantic import BaseModel
 
 from models.supplier import SupplierCreate, SupplierResponse, SupplierUpdate
 from database.mongodb import get_database
-from api.middleware.auth import hash_password, create_access_token, get_current_user, verify_password
+from api.middleware.auth import hash_password, create_access_token, get_current_user
 import logging
-
-# Login model
-class SupplierLogin(BaseModel):
-    email: str
-    password: str
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-@router.post("/login", response_model=dict)
-async def login_supplier(login_data: SupplierLogin):
-    """Login supplier and return access token"""
-    db = get_database()
-    
-    # Find supplier by email
-    supplier = await db.suppliers.find_one({"email": login_data.email})
-    if not supplier:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
-        )
-    
-    # Verify password
-    if not verify_password(login_data.password, supplier["password_hash"]):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
-        )
-    
-    # Create access token
-    token = create_access_token({
-        "sub": str(supplier["_id"]),
-        "email": supplier["email"]
-    })
-    
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "supplier_id": str(supplier["_id"])
-    }
 
 
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)

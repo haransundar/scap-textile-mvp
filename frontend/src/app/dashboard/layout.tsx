@@ -1,242 +1,101 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { ModeToggle } from '@/components/mode-toggle';
+import Link from 'next/link';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, checkAuth, logout } = useAuthStore();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('en');
-  const [authChecked, setAuthChecked] = useState(false);
+  const { isAuthenticated, user, checkAuth, logout } = useAuthStore();
 
   useEffect(() => {
-    async function run() {
-      await checkAuth();
-      setAuthChecked(true);
-    }
-    run();
+    checkAuth();
   }, [checkAuth]);
 
   useEffect(() => {
-    if (authChecked && !isAuthenticated && !isLoading) {
-      router.replace('/login');
+    if (!isAuthenticated) {
+      router.push('/login');
     }
-  }, [authChecked, isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, router]);
 
-  // Show loading while checking auth
-  if (!authChecked || isLoading) {
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
+  if (!isAuthenticated) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Don't render if not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', current: pathname === '/dashboard' },
-    { name: 'Certificates', href: '/dashboard/certificates', current: pathname === '/dashboard/certificates' },
-    { name: 'Risk Analysis', href: '/dashboard/risk', current: pathname === '/dashboard/risk' },
-    { name: 'Compliance', href: '/dashboard/compliance', current: pathname === '/dashboard/compliance' },
-    { name: 'Chatbot', href: '/dashboard/chatbot', current: pathname === '/dashboard/chatbot' },
-  ];
-
-  const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'ta', name: 'Tamil' },
-    { code: 'hi', name: 'Hindi' },
-  ];
-
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <nav className="bg-blue-600 dark:bg-blue-800 shadow-md">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <h1 className="text-xl font-bold text-indigo-600">SCAP</h1>
+              </div>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <Link
+                  href="/dashboard"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/dashboard/risk"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  Risk Assessment
+                </Link>
+                <Link
+                  href="/dashboard/certificates"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  Certificates
+                </Link>
+                <Link
+                  href="/dashboard/chatbot"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  AI Assistant
+                </Link>
+              </div>
+            </div>
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Link href="/dashboard" className="flex items-center hover:opacity-90 transition-opacity">
-                  <div className="relative h-10 w-10 flex-shrink-0 flex items-center justify-center bg-white rounded-full shadow-md">
-                    <Image 
-                      src="/branding/favicons/scap-icon.png"
-                      alt="SCAP Logo"
-                      width={24}
-                      height={24}
-                      className="object-contain p-0.5"
-                      priority
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-xl font-bold tracking-tight text-white">SCAP</div>
-                    <div className="text-xs text-blue-100">Supply Chain AI Compliance Platform</div>
-                  </div>
-                </Link>
-              </div>
-              <div className="hidden md:block">
-                <div className="ml-10 flex items-baseline space-x-4">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={`${
-                        item.current
-                          ? 'bg-blue-700 dark:bg-blue-900 text-white'
-                          : 'text-white hover:bg-blue-500 dark:hover:bg-blue-700'
-                      } rounded-md px-3 py-2 text-sm font-medium`}
-                      aria-current={item.current ? 'page' : undefined}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center md:ml-6">
-                <div className="relative ml-3">
-                  <ModeToggle />
-                </div>
-                <div className="relative ml-3">
-                  <select
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="rounded-md border-0 bg-blue-500 dark:bg-blue-700 py-1.5 pl-3 pr-10 text-white focus:ring-2 focus:ring-white"
-                  >
-                    {languages.map((lang) => (
-                      <option key={lang.code} value={lang.code} className="bg-blue-500 dark:bg-blue-700">
-                        {lang.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="relative ml-3">
-                  <button
-                    type="button"
-                    className="flex max-w-xs items-center rounded-full bg-blue-500 dark:bg-blue-700 text-sm text-white hover:bg-blue-600 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-white"
-                    onClick={() => logout()}
-                  >
-                    <span className="px-3 py-1.5">Logout</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="-mr-2 flex md:hidden">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-md bg-blue-700 dark:bg-blue-900 p-2 text-white hover:bg-blue-500 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                <span className="sr-only">Open main menu</span>
-                {isMobileMenuOpen ? (
-                  <svg
-                    className="block h-6 w-6"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className="block h-6 w-6"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {isMobileMenuOpen && (
-          <div className="md:hidden">
-            <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`${
-                    item.current
-                      ? 'bg-blue-700 dark:bg-blue-900 text-white'
-                      : 'text-white hover:bg-blue-500 dark:hover:bg-blue-700'
-                  } block rounded-md px-3 py-2 text-base font-medium`}
-                  aria-current={item.current ? 'page' : undefined}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
-            <div className="border-t border-blue-700 dark:border-blue-900 pb-3 pt-4">
-              <div className="flex items-center px-5">
-                <div className="ml-3">
-                  <div className="text-base font-medium text-white">
-                    {user?.email || 'User'}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 space-y-1 px-2">
-                <div className="flex items-center mb-2">
-                  <span className="text-white mr-2">Theme:</span>
-                  <ModeToggle />
-                </div>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="block w-full rounded-md border-0 bg-blue-500 dark:bg-blue-700 py-1.5 pl-3 pr-10 text-white focus:ring-2 focus:ring-white"
-                >
-                  {languages.map((lang) => (
-                    <option key={lang.code} value={lang.code} className="bg-blue-500 dark:bg-blue-700">
-                      {lang.name}
-                    </option>
-                  ))}
-                </select>
+                <span className="text-sm text-gray-700 mr-4">
+                  {user?.email}
+                </span>
                 <button
-                  onClick={() => logout()}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-500 dark:hover:bg-blue-700"
+                  onClick={handleLogout}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                 >
                   Logout
                 </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </nav>
 
-      <main>
-        <div className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
+      {/* Main content */}
+      <main className="py-10">
+        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
           {children}
         </div>
       </main>

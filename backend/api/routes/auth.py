@@ -212,7 +212,7 @@ async def read_users_me(token: str = Depends(oauth2_scheme)):
     try:
         print(f"[AUTH] Getting database connection...")
         db = get_database()
-        if not db:
+        if db is None:
             print("[AUTH] Database connection failed")
             raise HTTPException(
                 status_code=500, 

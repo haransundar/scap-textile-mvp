@@ -8,12 +8,10 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { useI18n } from '@/lib/i18n/i18n-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-// Checkbox component removed - using standard input instead
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -28,14 +26,15 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, error: authError } = useAuthStore();
+  const { login } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setError,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -47,15 +46,45 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      await login(data.email, data.password);
-      router.push('/dashboard');
-    } catch (err) {
-      // Error is already handled in the auth store
+      setIsLoading(true);
+      setError('');
+      
+      console.log('Form submitted with data:', data);
+      
+      // Call the login function from the auth store
+      const success = await login(data.email, data.password, data.rememberMe);
+      
+      if (success) {
+        console.log('Login successful, redirecting to dashboard...');
+        router.push('/dashboard');
+      } else {
+        // If login returns false but doesn't throw an error
+        setError('Login failed. Please check your credentials and try again.');
+      }
+    } catch (error: any) {
+      console.error('Login error in form:', error);
+      
+      // Extract error message from different possible error formats
+      const errorMessage = error.response?.data?.detail || 
+                         error.response?.data?.message || 
+                         error.message || 
+                         'An unexpected error occurred. Please try again.';
+      
+      console.error('Login error details:', {
+        message: errorMessage,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header with theme toggle and language switcher */}
       <header className="absolute top-0 right-0 p-4 flex space-x-4 z-10">
         <LanguageSwitcher />
@@ -85,9 +114,9 @@ export default function LoginPage() {
           </div>
 
           {/* Error Message */}
-          {(errors.root || authError) && (
+          {error && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
-              {errors.root?.message || authError}
+              {error}
             </div>
           )}
 
@@ -201,20 +230,14 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 gap-3">
+              <div className="mt-6">
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="w-full flex justify-center items-center"
                   onClick={() => {}}
                 >
-                  <svg 
-                    className="w-5 h-5 mr-2" 
-                    viewBox="0 0 24 24" 
-                    fill="currentColor"
-                    aria-hidden="true"
-                    focusable="false"
-                  >
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>

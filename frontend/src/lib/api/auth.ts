@@ -42,12 +42,12 @@ export interface User {
   permissions?: string[];
 }
 
-// Store tokens in a more secure way
+// Store tokens in localStorage
 const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export const authApi = {
-  // Store tokens in localStorage
+  // Store tokens
   setTokens: (tokens: { accessToken: string; refreshToken?: string }) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(TOKEN_KEY, tokens.accessToken);
@@ -76,7 +76,7 @@ export const authApi = {
 
   // Login with email/password
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/login', {
+    const response = await apiClient.post<AuthResponse>('/api/auth/login', {
       email: credentials.email,
       password: credentials.password
     });
@@ -94,7 +94,7 @@ export const authApi = {
   
   // Register new user
   register: async (data: RegisterData): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/register', data);
+    const response = await apiClient.post<AuthResponse>('/api/auth/register', data);
     
     // Store tokens if received
     if (response.data.access_token) {
@@ -109,8 +109,7 @@ export const authApi = {
   
   // Get current user info
   getCurrentUser: async (): Promise<User> => {
-    // The base URL already includes /api/auth, so we just need /me
-    const response = await apiClient.get<User>('/me');
+    const response = await apiClient.get<User>('/api/auth/me');
     return response.data;
   },
   

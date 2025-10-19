@@ -27,7 +27,6 @@ class ChatRequest(BaseModel):
     message: str
     language: str = "en"  # en, ta, hi
     chat_history: List[ChatMessage] = []
-    use_reasoning: bool = False  # Use DeepSeek for complex reasoning
 
 
 @router.post("/message")
@@ -46,31 +45,22 @@ async def send_message(
         # Convert chat history to dict format
         history = [{"role": msg.role, "content": msg.content} for msg in request.chat_history]
         
-        # Get response from LLM service
-        try:
-            response = await llm_service.chat_completion(
-                query=query,
-                chat_history=history,
-                use_rag=True,
-                use_reasoning=request.use_reasoning
-            )
-        except Exception as llm_error:
-            logger.warning(f"LLM service error: {llm_error}, using fallback")
-            # Fallback to Gemini if Groq fails
-            try:
-                response = document_ai_service.generate_compliance_response(query)
-            except Exception as fallback_error:
-                logger.error(f"Fallback also failed: {fallback_error}")
-                response = f"I apologize, but I'm having trouble processing your request right now. Your question was: '{request.message}'. Please try again in a moment or contact support if the issue persists."
+        # Get response from LLM
+        response = await llm_service.chat_completion(
+            query=query,
+            chat_history=history,
+            use_rag=True
+        )
+        
+        # Translate back if needed
+        if request.language != "en":
+            logger.info(f"Translating response to {request.language}")
+            response = document_ai_service.translate_text(response, request.language)
         
         # Store in chat history
         db = get_database()
-        
-        # Use a default user_id if not available
-        user_id = current_user.get("user_id", "test_user")
-        
         await db.chat_history.update_one(
-            {"supplier_id": user_id},
+            {"supplier_id": current_user["user_id"]},
             {
                 "$push": {
                     "messages": {

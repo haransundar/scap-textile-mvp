@@ -22,8 +22,8 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Get API URL from environment with fallback
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Get API URL from environment with fallback (empty for proxy)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -31,16 +31,13 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
   },
-  withCredentials: true, // Important for cookies and sessions
-  timeout: 30000 // 30 seconds timeout
+  withCredentials: true,
+  timeout: 30000
 });
 
 // Log API URL for debugging
-console.log('API Base URL:', API_URL);
+console.log('API Base URL:', API_URL || '(using Next.js proxy)');
 
 // Request interceptor for auth token
 apiClient.interceptors.request.use(
@@ -61,14 +58,6 @@ apiClient.interceptors.request.use(
       config.headers.set('Authorization', `Bearer ${accessToken}`, true);
     }
     
-    // Log request for debugging
-    console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
-      baseURL: config.baseURL,
-      data: config.data,
-      params: config.params,
-      headers: config.headers?.toJSON()
-    });
-    
     return config;
   },
   (error: AxiosError) => {
@@ -80,50 +69,29 @@ apiClient.interceptors.request.use(
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Log successful responses for debugging
-    console.log(`[API] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-      data: response.data,
-      headers: response.headers
-    });
     return response;
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as any;
     
-    // Enhanced error logging
-    console.error('[API] Error Details:', {
-      timestamp: new Date().toISOString(),
+    // Log error details
+    console.error('[API] Error:', {
       url: originalRequest?.url,
-      method: originalRequest?.method,
-      baseURL: originalRequest?.baseURL,
       status: error.response?.status,
-      statusText: error.response?.statusText,
-      requestHeaders: originalRequest?.headers,
-      requestData: originalRequest?.data,
-      responseHeaders: error.response?.headers,
-      responseData: error.response?.data,
-      errorMessage: error.message,
-      errorStack: error.stack,
-      isAxiosError: error.isAxiosError,
-      code: error.code,
+      message: error.message,
     });
 
     // If error is 401 and we haven't tried to refresh the token yet
     if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log('[API] 401 Unauthorized - Attempting token refresh...');
-      
       if (isRefreshing) {
-        console.log('[API] Token refresh already in progress, adding to queue');
         // If already refreshing, add to queue
         return new Promise((resolve, reject) => {
           failedQueue.push({ 
             resolve: (token) => {
-              console.log('[API] Processing queued request with new token');
               originalRequest.headers['Authorization'] = 'Bearer ' + token;
               resolve(apiClient(originalRequest));
             }, 
             reject: (err) => {
-              console.error('[API] Error in queued request:', err);
               reject(err);
             } 
           });
@@ -132,45 +100,35 @@ apiClient.interceptors.response.use(
 
       originalRequest._retry = true;
       isRefreshing = true;
-      console.log('[API] Starting token refresh process');
 
       return new Promise((resolve, reject) => {
         authApi
           .refreshToken()
           .then(({ access_token }) => {
-            console.log('[API] Token refresh successful');
-            
             // Update the auth header
             if (originalRequest.headers) {
               originalRequest.headers['Authorization'] = 'Bearer ' + access_token;
-              console.log('[API] Updated request headers with new token');
             }
 
             // Process any queued requests
-            console.log(`[API] Processing ${failedQueue.length} queued requests`);
             processQueue(null, access_token);
 
             // Retry the original request
-            console.log('[API] Retrying original request with new token');
             resolve(apiClient(originalRequest));
           })
           .catch((err) => {
-            console.error('[API] Token refresh failed:', err);
             // If refresh token fails, clear auth and redirect to login
             processQueue(err, null);
-            console.log('[API] Clearing auth due to refresh failure');
             authApi.clearAuth();
             
             // Only redirect if we're on the client side and not already on the login page
             if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-              console.log('[API] Redirecting to login page');
               window.location.href = '/login';
             }
             
             reject(err);
           })
           .finally(() => {
-            console.log('[API] Token refresh process completed');
             isRefreshing = false;
           });
       });

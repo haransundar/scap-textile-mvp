@@ -14,7 +14,14 @@ def add_error_handlers(app: FastAPI):
     
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
-        """Handle validation errors"""
+        """Handle validation errors - but skip OPTIONS requests (CORS preflight)"""
+        # Skip validation errors for OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={}
+            )
+        
         logger.error(f"Validation error: {exc.errors()}")
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

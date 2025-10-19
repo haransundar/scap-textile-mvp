@@ -1,201 +1,118 @@
 import { create } from 'zustand';
-import { authApi, AuthResponse, User, LoginCredentials, RegisterData } from '../api/auth';
+import { authApi, type User, type LoginCredentials, type RegisterData } from '@/lib/api/auth';
 
 interface AuthState {
-  user: (User & { supplier_id?: string }) | null;
+  user: User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
-  register: (email: string, password: string, fullName: string, companyName?: string, role?: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  checkAuth: () => Promise<boolean>;
+  
+  // Actions
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
+  clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  isAuthenticated: false,
   isLoading: false,
   error: null,
-  isAuthenticated: false,
 
-  login: async (email: string, password: string, rememberMe = true) => {
+  login: async (credentials: LoginCredentials) => {
     set({ isLoading: true, error: null });
     try {
-      // Log the login attempt
-      console.log('Attempting login with email:', email);
+      const response = await authApi.login(credentials);
       
-      // Call the auth API
-      const response = await authApi.login({ 
-        email, 
-        password,
-        remember_me: rememberMe 
-      });
+      // Fetch user data
+      const user = await authApi.getCurrentUser();
       
-      // Log the API response
-      console.log('Login API response:', response);
-      
-      if (!response.access_token) {
-        throw new Error('No access token received');
-      }
-      
-      // Get user data using the token
-      const userData = await authApi.getCurrentUser();
-      console.log('User data from /me endpoint:', userData);
-      
-      // Prepare user object with fallback for supplier_id
-      const userWithSupplierId = {
-        ...userData,
-        supplier_id: userData.supplier_id || userData._id
-      };
-      
-      console.log('Login successful, user:', userWithSupplierId);
       set({ 
-        user: userWithSupplierId, 
+        user, 
         isAuthenticated: true, 
-        isLoading: false,
-        error: null
+        isLoading: false 
       });
-      
-      return true;
     } catch (error: any) {
-      // Enhanced error logging
-      const errorMessage = error.response?.data?.detail || 
-                         error.response?.data?.message || 
-                         error.message || 
-                         'Login failed. Please check your credentials and try again.';
-      
-      console.error('Login error:', {
-        message: errorMessage,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        error: error
-      });
-      
+      const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
       set({ 
-        error: errorMessage,
+        error: errorMessage, 
+        isLoading: false,
         isAuthenticated: false,
-        isLoading: false
+        user: null
       });
-      
-      return false;
+      throw error;
     }
   },
 
-  register: async (email: string, password: string, fullName: string, companyName?: string, role = 'supplier'): Promise<boolean> => {
+  register: async (data: RegisterData) => {
     set({ isLoading: true, error: null });
     try {
-      console.log('Registering user:', { email, fullName, companyName, role });
+      const response = await authApi.register(data);
       
-      const response = await authApi.register({ 
-        email, 
-        password, 
-        full_name: fullName, 
-        company_name: companyName, 
-        role 
-      });
-      
-      console.log('Registration response:', response);
-      
-      if (!response.access_token) {
-        throw new Error('No access token received during registration');
-      }
-      
-      // Get user data
-      const userData = await authApi.getCurrentUser();
-      console.log('User data after registration:', userData);
-      
-      const userWithSupplierId = {
-        ...userData,
-        supplier_id: userData.supplier_id || userData._id
-      };
+      // Fetch user data
+      const user = await authApi.getCurrentUser();
       
       set({ 
-        user: userWithSupplierId, 
+        user, 
         isAuthenticated: true, 
-        isLoading: false,
-        error: null
+        isLoading: false 
       });
-      
-      return true;
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
-      console.error('Registration error:', errorMessage, error);
-      
       set({ 
-        error: errorMessage,
+        error: errorMessage, 
+        isLoading: false,
         isAuthenticated: false,
-        isLoading: false
+        user: null
       });
-      
-      return false;
+      throw error;
     }
   },
 
-  logout: async (): Promise<boolean> => {
+  logout: async () => {
+    set({ isLoading: true });
     try {
       await authApi.logout();
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('Logout error:', error);
     } finally {
-      // Clear local state
       set({ 
         user: null, 
         isAuthenticated: false, 
         isLoading: false,
-        error: null 
-      });
-    }
-    return true;
-  },
-
-  checkAuth: async (): Promise<boolean> => {
-    set({ isLoading: true });
-    try {
-      console.log('Checking authentication status...');
-      
-      // Check if we have a token
-      const { accessToken } = authApi.getTokens();
-      if (!accessToken) {
-        throw new Error('No authentication token found');
-      }
-      
-      // Verify token by fetching user data
-      const userData = await authApi.getCurrentUser();
-      
-      if (!userData) {
-        throw new Error('No user data returned');
-      }
-      
-      console.log('User is authenticated:', userData);
-      
-      const userWithSupplierId = {
-        ...userData,
-        supplier_id: userData.supplier_id || userData._id
-      };
-      
-      set({
-        user: userWithSupplierId,
-        isAuthenticated: true,
-        isLoading: false,
         error: null
       });
-      
-      return true;
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      
-      // Clear any invalid tokens
-      authApi.clearAuth();
-      
-      set({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: 'Session expired. Please log in again.'
-      });
-      
-      return false;
     }
   },
+
+  checkAuth: async () => {
+    const { accessToken } = authApi.getTokens();
+    
+    if (!accessToken) {
+      set({ isAuthenticated: false, user: null });
+      return;
+    }
+
+    set({ isLoading: true });
+    try {
+      const user = await authApi.getCurrentUser();
+      set({ 
+        user, 
+        isAuthenticated: true, 
+        isLoading: false 
+      });
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      authApi.clearAuth();
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false 
+      });
+    }
+  },
+
+  clearError: () => set({ error: null })
 }));
