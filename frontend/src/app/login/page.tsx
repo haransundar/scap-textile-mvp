@@ -98,11 +98,11 @@ export default function LoginPage() {
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <Image 
-                src="/branding/logos/scap-logo-horizontal.png"
+                src="/scap-icon.png"
                 alt="SCAP Logo"
-                width={180}
-                height={60}
-                className="h-12 w-auto"
+                width={80}
+                height={80}
+                className="rounded-xl shadow-lg"
                 priority
               />
             </div>

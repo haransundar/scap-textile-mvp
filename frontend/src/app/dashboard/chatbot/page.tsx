@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/lib/store/auth-store';
 import apiClient from '@/lib/api/client';
-import { Send, Bot, Mic, Plus } from 'lucide-react';
+import { Send, Mic, Plus } from 'lucide-react';
+import Image from 'next/image';
 
 interface Message {
   id: string;
@@ -17,7 +18,7 @@ export default function ChatbotPage() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hello! I\'m your SCAP AI assistant. How can I help you with compliance or certification questions today?',
+      content: 'Hello! I\'m Linky, your SCAP AI assistant. How can I help you with compliance or certification questions today?',
       timestamp: new Date(),
     }
   ]);
@@ -87,7 +88,16 @@ export default function ChatbotPage() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">AI Compliance Assistant</h1>
+          <div className="flex items-center gap-3">
+            <Image 
+              src="/linky-avatar.png" 
+              alt="Linky AI Assistant" 
+              width={48} 
+              height={48}
+              className="rounded-full"
+            />
+            <h1 className="text-2xl font-bold text-foreground">Linky - AI Compliance Assistant</h1>
+          </div>
           <div className="mt-4 flex items-center gap-2">
             <input 
               type="checkbox" 
@@ -115,8 +125,14 @@ export default function ChatbotPage() {
                 }`}
               >
                 {message.role === 'assistant' && (
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-5 w-5 text-primary-foreground" />
+                  <div className="w-8 h-8 flex-shrink-0">
+                    <Image 
+                      src="/linky-avatar.png" 
+                      alt="Linky" 
+                      width={32} 
+                      height={32}
+                      className="rounded-full"
+                    />
                   </div>
                 )}
                 
@@ -146,8 +162,14 @@ export default function ChatbotPage() {
 
             {isLoading && (
               <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <Bot className="h-5 w-5 text-primary-foreground" />
+                <div className="w-8 h-8">
+                  <Image 
+                    src="/linky-avatar.png" 
+                    alt="Linky" 
+                    width={32} 
+                    height={32}
+                    className="rounded-full animate-pulse"
+                  />
                 </div>
                 <div className="bg-muted rounded-lg px-4 py-3">
                   <div className="flex gap-1">

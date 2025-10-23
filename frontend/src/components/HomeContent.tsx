@@ -13,9 +13,18 @@ export default function HomeContent() {
       {/* Header */}
       <header className="bg-blue-600 dark:bg-blue-800 text-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold">SCAP</h1>
-            <p className="ml-2 text-sm hidden md:block">Supply Chain AI Compliance Platform</p>
+          <div className="flex items-center gap-3">
+            <Image 
+              src="/scap-icon.png" 
+              alt="SCAP Logo" 
+              width={40} 
+              height={40}
+              className="rounded-lg"
+            />
+            <div>
+              <h1 className="text-2xl font-bold">SCAP</h1>
+              <p className="text-xs hidden md:block">Supply Chain AI Compliance Platform</p>
+            </div>
           </div>
           <nav>
             <ul className="flex space-x-6">
@@ -81,11 +90,11 @@ export default function HomeContent() {
               <div className="relative">
                 <div className="relative z-10 max-w-md mx-auto">
                   <Image 
-                    src="/branding/mascot/linky-full.png" 
-                    alt="SCAP Platform Preview" 
+                    src="/linky-full.png" 
+                    alt="Linky - SCAP AI Assistant" 
                     width={600} 
                     height={600}
-                    className="w-full h-auto"
+                    className="w-full h-auto drop-shadow-2xl"
                     priority
                   />
                 </div>
