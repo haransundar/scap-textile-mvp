@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/store/auth-store';
 import { useTheme } from '@/lib/theme-provider';
 import { useI18n } from '@/lib/i18n/i18n-provider';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sun, Moon } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -64,15 +65,19 @@ export default function DashboardLayout({
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-14">
             <div className="flex items-center gap-8">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-background rounded-full flex items-center justify-center">
-                  <span className="text-primary font-bold text-sm">S</span>
-                </div>
+              <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition">
+                <Image 
+                  src="/scap-icon.png" 
+                  alt="SCAP Logo" 
+                  width={36} 
+                  height={36}
+                  className="rounded-lg"
+                />
                 <div>
                   <div className="text-primary-foreground font-semibold text-sm">SCAP</div>
                   <div className="text-primary-foreground/80 text-xs">Supply Chain AI Compliance Platform</div>
                 </div>
-              </div>
+              </Link>
               <div className="hidden md:flex items-center gap-1">
                 <Link
                   href="/dashboard"
