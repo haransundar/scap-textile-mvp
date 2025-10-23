@@ -8,6 +8,7 @@ import {
   FileText, Download, Eye, Search, CheckCircle, XCircle, 
   AlertTriangle, Trash2, Share2, MoreVertical, ChevronLeft, ChevronRight 
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface Certificate {
   _id: string;
@@ -385,7 +386,13 @@ export default function CertificatesPage() {
             </>
           ) : (
             <div className="p-8 sm:p-12 text-center">
-              <FileText className="mx-auto h-14 w-14 sm:h-16 sm:w-16 text-muted-foreground/50 mb-4" />
+              <Image 
+                src="/linky-full.png" 
+                alt="Linky Assistant" 
+                width={120} 
+                height={120}
+                className="mx-auto mb-4 opacity-80"
+              />
               <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
                 {searchQuery || statusFilter !== 'all' || typeFilter !== 'all'
                   ? 'No certificates found'

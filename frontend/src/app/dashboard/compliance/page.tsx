@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Download
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface Regulation {
   id: string;
@@ -287,12 +288,21 @@ export default function CompliancePage() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Page Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('compliance.title')}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t('compliance.subtitle')}
-            </p>
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-4">
+            <Image 
+              src="/scap-icon.png" 
+              alt="SCAP" 
+              width={48} 
+              height={48}
+              className="opacity-80"
+            />
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{t('compliance.title')}</h1>
+              <p className="text-muted-foreground mt-1">
+                {t('compliance.subtitle')}
+              </p>
+            </div>
           </div>
           <Button className="flex items-center gap-2">
             <Bell className="w-4 h-4" />

@@ -88,15 +88,18 @@ export default function ChatbotPage() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Image 
-              src="/linky-avatar.png" 
+              src="/linky-full.png" 
               alt="Linky AI Assistant" 
-              width={48} 
-              height={48}
-              className="rounded-full"
+              width={64} 
+              height={64}
+              className="rounded-lg"
             />
-            <h1 className="text-2xl font-bold text-foreground">Linky - AI Compliance Assistant</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Linky - AI Compliance Assistant</h1>
+              <p className="text-sm text-muted-foreground mt-1">Your friendly AI helper for compliance questions</p>
+            </div>
           </div>
           <div className="mt-4 flex items-center gap-2">
             <input 

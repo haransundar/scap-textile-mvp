@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Building2, Plus, MoreVertical, FileText, BarChart, Network, Shield, Users, X } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/auth-store';
 import axios from 'axios';
+import Image from 'next/image';
 
 interface Brand {
   _id: string;
@@ -227,6 +228,22 @@ export default function BrandsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : brands.length === 0 ? (
+          <div className="bg-card rounded-lg p-12 text-center border border-border">
+            <Image 
+              src="/linky-full.png" 
+              alt="Linky Assistant" 
+              width={100} 
+              height={100}
+              className="mx-auto mb-4 opacity-80"
+            />
+            <h3 className="text-xl font-semibold text-foreground mb-2">No brand connections yet</h3>
+            <p className="text-muted-foreground mb-6">Start connecting with brands to share your compliance data</p>
+            <button className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition">
+              <Plus className="w-4 h-4 inline mr-2" />
+              Connect Brand
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

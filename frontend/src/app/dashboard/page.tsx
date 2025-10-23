@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/lib/store/auth-store';
 import Link from 'next/link';
 import { FileText, MessageSquare, TrendingUp, Shield } from 'lucide-react';
+import Image from 'next/image';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -10,11 +11,20 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Welcome, {user?.full_name || user?.email}</h1>
-          <p className="mt-2 text-muted-foreground">
-            Supply Chain AI Compliance Platform Dashboard
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Welcome, {user?.full_name || user?.email}</h1>
+            <p className="mt-2 text-muted-foreground">
+              Supply Chain AI Compliance Platform Dashboard
+            </p>
+          </div>
+          <Image 
+            src="/scap-icon.png" 
+            alt="SCAP Logo" 
+            width={60} 
+            height={60}
+            className="opacity-80"
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

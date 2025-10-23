@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Bell, CheckCircle, AlertTriangle, Calendar, Mail, MailOpen, Settings, Trash2 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/auth-store';
 import axios from 'axios';
+import Image from 'next/image';
 
 type NotificationType = 'alert' | 'update' | 'success' | 'reminder';
 
@@ -203,7 +204,13 @@ export default function NotificationsPage() {
           </div>
         ) : notifications.length === 0 ? (
           <div className="bg-card rounded-lg p-12 text-center border border-border">
-            <Bell className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <Image 
+              src="/linky-full.png" 
+              alt="Linky Assistant" 
+              width={100} 
+              height={100}
+              className="mx-auto mb-4 opacity-80"
+            />
             <h3 className="text-xl font-semibold text-foreground mb-2">No notifications yet</h3>
             <p className="text-muted-foreground">You're all caught up! Check back later for updates.</p>
           </div>

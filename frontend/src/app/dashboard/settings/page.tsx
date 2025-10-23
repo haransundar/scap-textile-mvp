@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Plus, MoreVertical, Save } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/auth-store';
 import axios from 'axios';
+import Image from 'next/image';
 
 interface Profile {
   company_name: string;
@@ -194,7 +195,16 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-3xl font-bold text-foreground mb-6">Settings</h1>
+        <div className="flex items-center gap-4 mb-6">
+          <Image 
+            src="/scap-icon.png" 
+            alt="SCAP" 
+            width={48} 
+            height={48}
+            className="opacity-80"
+          />
+          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        </div>
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-border">

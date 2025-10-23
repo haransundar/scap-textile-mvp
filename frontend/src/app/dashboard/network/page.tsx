@@ -24,6 +24,7 @@ import {
   Eye,
   Share2
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface Supplier {
   id: string;
@@ -301,12 +302,21 @@ export default function NetworkPage() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Page Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('network.title')}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t('network.subtitle')}
-            </p>
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-4">
+            <Image 
+              src="/scap-icon.png" 
+              alt="SCAP" 
+              width={48} 
+              height={48}
+              className="opacity-80"
+            />
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{t('network.title')}</h1>
+              <p className="text-muted-foreground mt-1">
+                {t('network.subtitle')}
+              </p>
+            </div>
         </div>
         <div className="flex gap-2">
           <Button
