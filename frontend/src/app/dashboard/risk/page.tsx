@@ -195,18 +195,18 @@ export default function RiskAnalysisPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1419] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-2">Risk Analysis</h1>
-            <p className="text-gray-400">Monitor your current risk and recent trend</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">🎯 Risk Analysis</h1>
+            <p className="text-muted-foreground">Monitor your current risk and recent trend with Linky's AI insights</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleRecalculate}
               disabled={recalculating || loading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed border border-transparent rounded-lg text-white text-sm font-medium transition flex items-center gap-2"
+              className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed border border-transparent rounded-lg text-primary-foreground text-sm font-medium transition flex items-center gap-2"
             >
               <RefreshCw className={`h-4 w-4 ${recalculating ? 'animate-spin' : ''}`} />
               {recalculating ? 'Calculating...' : 'Recalculate Risk'}
@@ -214,7 +214,7 @@ export default function RiskAnalysisPage() {
             <button
               onClick={fetchRiskData}
               disabled={loading}
-              className="px-4 py-2 bg-[#1a2332] hover:bg-[#1f2937] border border-gray-700 rounded-lg text-white text-sm font-medium transition flex items-center gap-2"
+              className="px-4 py-2 bg-secondary hover:bg-secondary/80 border border-border rounded-lg text-secondary-foreground text-sm font-medium transition flex items-center gap-2"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -231,19 +231,19 @@ export default function RiskAnalysisPage() {
                 className={`rounded-lg border p-4 flex items-start gap-3 ${
                   insight.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/50' :
                   insight.type === 'success' ? 'bg-green-500/10 border-green-500/50' :
-                  'bg-blue-500/10 border-blue-500/50'
+                  'bg-primary/10 border-primary/50'
                 }`}
               >
                 <AlertCircle className={`h-5 w-5 mt-0.5 ${
                   insight.type === 'warning' ? 'text-yellow-400' :
                   insight.type === 'success' ? 'text-green-400' :
-                  'text-blue-400'
+                  'text-primary'
                 }`} />
                 <div className="flex-1">
-                  <h3 className="font-medium text-white">{insight.title}</h3>
-                  <p className="text-sm text-gray-300 mt-1">{insight.message}</p>
+                  <h3 className="font-medium text-foreground">{insight.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{insight.message}</p>
                   {insight.action && (
-                    <button className="text-sm text-blue-400 hover:text-blue-300 mt-2">
+                    <button className="text-sm text-primary hover:text-primary/80 mt-2 transition-colors">
                       {insight.action} →
                     </button>
                   )}
@@ -255,20 +255,20 @@ export default function RiskAnalysisPage() {
 
         {/* Benchmark Card */}
         {benchmark && (
-          <div className="mb-6 bg-[#1a2332] rounded-lg border border-gray-800 p-4">
+          <div className="mb-6 bg-card rounded-lg border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Industry Benchmark</p>
-                <p className="text-2xl font-bold text-white mt-1">
-                  Your Risk: {benchmark.your_score} <span className="text-gray-500">|</span> Industry: {benchmark.industry_average}
+                <p className="text-sm text-muted-foreground">Industry Benchmark</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
+                  Your Risk: {benchmark.your_score} <span className="text-muted-foreground">|</span> Industry: {benchmark.industry_average}
                 </p>
                 <p className={`text-sm mt-1 ${benchmark.comparison === 'better' ? 'text-green-400' : 'text-red-400'}`}>
                   {benchmark.comparison === 'better' ? '✓' : '✗'} {benchmark.difference.toFixed(1)} points {benchmark.comparison} than industry average
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-400">Percentile</p>
-                <p className="text-2xl font-bold text-white">{benchmark.percentile}%</p>
+                <p className="text-sm text-muted-foreground">Percentile</p>
+                <p className="text-2xl font-bold text-foreground">{benchmark.percentile}%</p>
               </div>
             </div>
           </div>
@@ -277,8 +277,8 @@ export default function RiskAnalysisPage() {
         <RiskErrorBoundary>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-1">
-              <div className={`p-6 rounded-lg border ${riskColor.ring} bg-[#1a2332] border-gray-800`}>
-                <h2 className="text-lg font-medium text-white mb-4">Current Score</h2>
+              <div className={`p-6 rounded-lg border ${riskColor.ring} bg-card border-border`}>
+                <h2 className="text-lg font-medium text-foreground mb-4">Current Score</h2>
                 <div className="flex justify-center">
                   <RiskGauge 
                     score={current?.score ?? 0} 
@@ -292,27 +292,27 @@ export default function RiskAnalysisPage() {
             </div>
 
             <div className="lg:col-span-2">
-              <div className="p-6 rounded-lg border border-gray-800 bg-[#1a2332]">
-                <h2 className="text-lg font-medium text-white mb-4">Risk Drivers</h2>
+              <div className="p-6 rounded-lg border border-border bg-card">
+                <h2 className="text-lg font-medium text-foreground mb-4">Risk Drivers</h2>
                 {current?.risk_drivers?.length ? (
                   <RiskDrivers drivers={current.risk_drivers} />
                 ) : (
-                  <p className="text-gray-400 text-center py-4">
-                    No drivers available.
+                  <p className="text-muted-foreground text-center py-4">
+                    No drivers available. Upload certificates to get risk analysis.
                   </p>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="bg-[#1a2332] rounded-lg border border-gray-800 overflow-hidden">
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
             <div className="p-6">
-              <h2 className="text-lg font-medium text-white mb-4">History (180 days)</h2>
+              <h2 className="text-lg font-medium text-foreground mb-4">History (180 days)</h2>
               {historyData.length > 0 ? (
                 <RiskHistory data={historyData} />
               ) : (
-                <p className="text-gray-400 text-center py-4">
-                  No history yet.
+                <p className="text-muted-foreground text-center py-4">
+                  No history yet. Risk scores will appear here as they're calculated.
                 </p>
               )}
             </div>
