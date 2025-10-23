@@ -99,10 +99,16 @@ export default function DashboardLayout({
                   Compliance
                 </Link>
                 <Link
-                  href="/dashboard/network"
+                  href="/dashboard/brands"
                   className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
                 >
-                  Network
+                  Brands
+                </Link>
+                <Link
+                  href="/dashboard/notifications"
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Notifications
                 </Link>
                 <Link
                   href="/dashboard/chatbot"
@@ -144,6 +150,13 @@ export default function DashboardLayout({
                 <option value="hi">हिन्दी (Hindi)</option>
                 <option value="ta">தமிழ் (Tamil)</option>
               </select>
+              
+              <Link
+                href="/dashboard/settings"
+                className="text-primary-foreground hover:bg-primary/80 px-4 py-2 rounded-md text-sm font-medium transition"
+              >
+                Settings
+              </Link>
               
               <button
                 onClick={handleLogout}
