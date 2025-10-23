@@ -1,5 +1,7 @@
-import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig, AxiosHeaders } from 'axios';
-import { authApi } from './auth';
+import axios, { AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
+
+// Check if we're on the server or client
+const isServer = typeof window === 'undefined';
 
 // Types for token refresh handling
 interface PendingRequest {
@@ -22,12 +24,27 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Get API URL from environment with fallback (empty for proxy)
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-
 // Create axios instance with default config
+// For server-side requests, use the full URL, for client-side use relative URL
+const baseURL = isServer 
+  ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'  // Backend server port
+  : '';  // Use relative URLs for client-side requests to avoid duplicate /api
+
+// Create a request interceptor to modify URLs before they're sent
+const requestInterceptor = (config: any) => {
+  // Make a copy of the config
+  const newConfig = { ...config };
+  
+  // If the URL starts with /api, remove the duplicate /api prefix
+  if (newConfig.url && newConfig.url.startsWith('/api/')) {
+    newConfig.url = newConfig.url.replace(/^\/api/, '');
+  }
+  
+  return newConfig;
+};
+
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: baseURL.endsWith('/api') ? baseURL : `${baseURL}/api`,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -36,107 +53,97 @@ const apiClient = axios.create({
   timeout: 30000
 });
 
-// Log API URL for debugging
-console.log('API Base URL:', API_URL || '(using Next.js proxy)');
+// Add request interceptor to handle URL modifications
+apiClient.interceptors.request.use(requestInterceptor);
 
 // Request interceptor for auth token
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config: AxiosRequestConfig) => {
     // Only run on client-side
-    if (typeof window === 'undefined') {
+    if (isServer) {
       return config;
     }
 
-    // Get token from auth store
-    const { accessToken } = authApi.getTokens();
+    // Get token from localStorage if available
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     
     // Set Authorization header if token exists
-    if (accessToken) {
-      if (!config.headers) {
-        config.headers = new AxiosHeaders();
-      }
-      config.headers.set('Authorization', `Bearer ${accessToken}`, true);
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     
     return config;
   },
-  (error: AxiosError) => {
-    console.error('[API] Request error:', error);
+  (error) => {
     return Promise.reject(error);
   }
 );
 
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
-  (response: AxiosResponse) => {
-    return response;
-  },
-  async (error: AxiosError) => {
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
     const originalRequest = error.config as any;
+
+    // Handle case where error response is undefined (network error)
+    if (!error.response) {
+      console.error('[API] Network Error:', {
+        url: originalRequest?.url,
+        message: error.message || 'Network error - server may be down',
+      });
+      
+      return Promise.reject({
+        ...error,
+        message: 'Network error - unable to connect to server',
+        isNetworkError: true
+      });
+    }
     
-    // Log error details
+    // Handle 401 Unauthorized errors
+    if (error.response.status === 401) {
+      // Clear token and redirect to login
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        
+        // Only redirect if not already on the login page
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+      }
+      
+      return Promise.reject(error);
+    }
+    
+    // Handle 404 errors specifically
+    if (error.response.status === 404) {
+      console.error('[API] Endpoint Not Found:', {
+        url: originalRequest?.url,
+        method: originalRequest?.method,
+        status: error.response.status,
+        statusText: error.response.statusText
+      });
+      
+      return Promise.reject({
+        ...error,
+        message: `API endpoint not found: ${originalRequest?.url}`,
+        isNotFoundError: true
+      });
+    }
+    
+    // Log error details with more information
     console.error('[API] Error:', {
       url: originalRequest?.url,
+      method: originalRequest?.method,
       status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
       message: error.message,
     });
 
-    // If error is 401 and we haven't tried to refresh the token yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // If already refreshing, add to queue
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ 
-            resolve: (token) => {
-              originalRequest.headers['Authorization'] = 'Bearer ' + token;
-              resolve(apiClient(originalRequest));
-            }, 
-            reject: (err) => {
-              reject(err);
-            } 
-          });
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      return new Promise((resolve, reject) => {
-        authApi
-          .refreshToken()
-          .then(({ access_token }) => {
-            // Update the auth header
-            if (originalRequest.headers) {
-              originalRequest.headers['Authorization'] = 'Bearer ' + access_token;
-            }
-
-            // Process any queued requests
-            processQueue(null, access_token);
-
-            // Retry the original request
-            resolve(apiClient(originalRequest));
-          })
-          .catch((err) => {
-            // If refresh token fails, clear auth and redirect to login
-            processQueue(err, null);
-            authApi.clearAuth();
-            
-            // Only redirect if we're on the client side and not already on the login page
-            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-              window.location.href = '/login';
-            }
-            
-            reject(err);
-          })
-          .finally(() => {
-            isRefreshing = false;
-          });
-      });
-    }
-
-    // If error is not 401 or we've already tried to refresh, reject
     return Promise.reject(error);
   }
 );
 
+// Export the configured axios instance
 export default apiClient;

@@ -49,13 +49,14 @@ export default function LoginPage() {
       setIsLoading(true);
       setError('');
       
-      console.log('Form submitted with data:', data);
-      
       // Call the login function from the auth store
-      const success = await login(data.email, data.password, data.rememberMe);
+      const success = await login({
+        email: data.email,
+        password: data.password,
+        remember_me: data.rememberMe
+      });
       
       if (success) {
-        console.log('Login successful, redirecting to dashboard...');
         router.push('/dashboard');
       } else {
         // If login returns false but doesn't throw an error
@@ -115,8 +116,13 @@ export default function LoginPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
-              {error}
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-circle">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{error}</span>
             </div>
           )}
 

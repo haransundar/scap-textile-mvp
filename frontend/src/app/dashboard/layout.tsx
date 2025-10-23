@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useTheme } from '@/lib/theme-provider';
+import { useI18n } from '@/lib/i18n/i18n-provider';
 import Link from 'next/link';
+import { Sun, Moon } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -11,93 +14,151 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { isAuthenticated, user, checkAuth, logout } = useAuthStore();
+  const { isAuthenticated, user, isLoading, checkAuth, logout } = useAuthStore();
+  const { theme, setTheme } = useTheme();
+  const { locale, setLocale, locales } = useI18n();
+  const [initialized, setInitialized] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    const initialize = async () => {
+      await checkAuth();
+      setInitialized(true);
+    };
+    
+    if (!initialized) {
+      initialize();
+    }
+  }, [checkAuth, initialized]);
+
+  useEffect(() => {
+    if (initialized && !isLoading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, initialized, router]);
 
   const handleLogout = async () => {
     await logout();
     router.push('/login');
   };
 
-  if (!isAuthenticated) {
+  if (!initialized || isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-indigo-600">SCAP</h1>
+      <nav className="bg-primary border-b border-border">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-14">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-background rounded-full flex items-center justify-center">
+                  <span className="text-primary font-bold text-sm">S</span>
+                </div>
+                <div>
+                  <div className="text-primary-foreground font-semibold text-sm">SCAP</div>
+                  <div className="text-primary-foreground/80 text-xs">Supply Chain AI Compliance Platform</div>
+                </div>
               </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <div className="hidden md:flex items-center gap-1">
                 <Link
                   href="/dashboard"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
                 >
                   Dashboard
                 </Link>
                 <Link
-                  href="/dashboard/risk"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Risk Assessment
-                </Link>
-                <Link
                   href="/dashboard/certificates"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
                 >
                   Certificates
                 </Link>
                 <Link
-                  href="/dashboard/chatbot"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  href="/dashboard/risk"
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
                 >
-                  AI Assistant
+                  Risk Analysis
+                </Link>
+                <Link
+                  href="/dashboard/compliance"
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Compliance
+                </Link>
+                <Link
+                  href="/dashboard/network"
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Network
+                </Link>
+                <Link
+                  href="/dashboard/chatbot"
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Chatbot
                 </Link>
               </div>
             </div>
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-sm text-gray-700 mr-4">
-                  {user?.email}
-                </span>
+            <div className="flex items-center gap-4">
+              {/* Theme Toggle */}
+              {mounted && (
                 <button
-                  onClick={handleLogout}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm flex items-center gap-2 transition"
+                  aria-label="Toggle theme"
                 >
-                  Logout
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun className="h-4 w-4" />
+                      Light
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="h-4 w-4" />
+                      Dark
+                    </>
+                  )}
                 </button>
-              </div>
+              )}
+              
+              {/* Language Selector */}
+              <select
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as any)}
+                className="bg-primary/80 text-primary-foreground px-3 py-1 rounded-md text-sm border-none cursor-pointer hover:bg-primary/70 transition"
+              >
+                <option value="en">English</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="ta">தமிழ் (Tamil)</option>
+              </select>
+              
+              <button
+                onClick={handleLogout}
+                className="text-primary-foreground hover:bg-primary/80 px-4 py-2 rounded-md text-sm font-medium transition"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
       </nav>
 
       {/* Main content */}
-      <main className="py-10">
-        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-          {children}
-        </div>
+      <main>
+        {children}
       </main>
     </div>
   );

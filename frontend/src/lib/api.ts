@@ -2,8 +2,15 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosProgressE
 import { ApiError } from './apiError';
 
 // Create a custom axios instance with default config
+const isServer = typeof window === 'undefined';
+
+// For server-side requests, use the full URL, for client-side use relative URL
+const baseURL = isServer 
+  ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'  // Backend server port
+  : '';  // Use relative URLs for client-side requests to avoid duplicate /api
+
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -136,31 +143,39 @@ export const paginatedGet = async <T>(
 };
 
 // Helper function to handle file uploads
-export const uploadFile = async <T>(
+export async function uploadFile<T = any>(
   url: string,
   file: File,
   fieldName: string = 'file',
   additionalData: Record<string, any> = {},
-  onUploadProgress?: (progressEvent: ProgressEvent) => void
-): Promise<T> => {
+  onUploadProgress?: (progressEvent: any) => void // Using any to avoid type conflicts
+): Promise<T> {
   const formData = new FormData();
   formData.append(fieldName, file);
-  
-  // Append additional data as JSON string if provided
-  if (Object.keys(additionalData).length > 0) {
-    formData.append('data', JSON.stringify(additionalData));
-  }
-  
-  return apiRequest<T>(
-    async () => {
-      const response = await api.post<T>(url, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: onUploadProgress as (progressEvent: AxiosProgressEvent) => void,
-      });
-      return response.data;
+
+  // Append additional data if provided
+  Object.entries(additionalData).forEach(([key, value]) => {
+    if (value !== undefined) {
+      formData.append(key, value);
+    }
+  });
+
+  const config: AxiosRequestConfig = {
+    headers: {
+      'Content-Type': 'multipart/form-data',
     },
-    `Failed to upload file to ${url}`
-  );
+    onUploadProgress,
+  };
+
+  try {
+    const response = await api.request<T>({
+      method: 'POST',
+      url,
+      data: formData,
+      ...config,
+    });
+    return response.data;
+  } catch (error) {
+    throw ApiError.fromAxiosError(error);
+  }
 };

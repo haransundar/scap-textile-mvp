@@ -1,7 +1,7 @@
 """
 Authentication routes for user registration and login
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from datetime import datetime, timedelta
@@ -179,7 +179,19 @@ async def login_for_access_token(login_data: UserLogin):
         print(f"Login error: {e}")
         raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
 
-@router.get("/me")
+@router.post("/logout")
+async def logout(response: Response):
+    """
+    Handle user logout by clearing the authentication cookie/token.
+    In a real application, you might want to add token to a blacklist.
+    """
+    # In a stateless JWT system, we can't invalidate the token on the server side
+    # without additional infrastructure (like a token blacklist).
+    # The client should remove the token from storage.
+    response.delete_cookie("access_token")
+    return {"message": "Successfully logged out"}
+
+@router.get("/me", response_model=dict)
 async def read_users_me(token: str = Depends(oauth2_scheme)):
     """Get current user info"""
     print(f"[AUTH] /me endpoint called with token: {token[:20]}...")

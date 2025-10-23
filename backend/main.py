@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from api.routes import suppliers, documents, compliance, risk, chat
+from api.routes import suppliers, documents, compliance, risk, chat, auth
 from api.middleware.error_handler import add_error_handlers
 from database.mongodb import connect_db, close_db
 from utils.config import settings
@@ -53,6 +53,7 @@ app.include_router(documents.router, prefix="/api/documents", tags=["Documents"]
 app.include_router(compliance.router, prefix="/api/compliance", tags=["Compliance"])
 app.include_router(risk.router, prefix="/api/risk", tags=["Risk"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 
 
 @app.get("/")
