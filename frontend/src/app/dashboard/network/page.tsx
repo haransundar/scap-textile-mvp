@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useI18n } from '@/lib/i18n/i18n-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,8 @@ interface NetworkEdge {
   to: string;
 }
 
-export default function EnhancedNetworkPage() {
+export default function NetworkPage() {
+  const { t } = useI18n();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -301,10 +303,10 @@ export default function EnhancedNetworkPage() {
         {/* Page Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Supply Chain Network</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('network.title')}</h1>
             <p className="text-muted-foreground mt-1">
-            Visualize and manage your multi-tier supplier network
-          </p>
+              {t('network.subtitle')}
+            </p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -312,18 +314,18 @@ export default function EnhancedNetworkPage() {
             onClick={() => setViewMode('graph')}
           >
             <Network className="w-4 h-4 mr-2" />
-            Graph View
+            {t('network.graphView')}
           </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
             onClick={() => setViewMode('list')}
           >
             <Layers className="w-4 h-4 mr-2" />
-            List View
+            {t('network.listView')}
           </Button>
           <Button>
             <Download className="w-4 h-4 mr-2" />
-            Export
+            {t('network.export')}
           </Button>
         </div>
       </div>
@@ -334,7 +336,7 @@ export default function EnhancedNetworkPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm">Total Suppliers</p>
+                <p className="text-muted-foreground text-sm">{t('network.totalSuppliers')}</p>
                 <p className="text-2xl font-bold text-foreground mt-1">{networkStats.totalSuppliers}</p>
               </div>
               <Users className="h-8 w-8 text-blue-400" />
@@ -345,7 +347,7 @@ export default function EnhancedNetworkPage() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-muted-foreground text-sm">Tier 2</p>
+              <p className="text-muted-foreground text-sm">{t('network.tier2')}</p>
               <p className="text-2xl font-bold text-foreground mt-1">{networkStats.tier2}</p>
             </div>
           </CardContent>
@@ -354,7 +356,7 @@ export default function EnhancedNetworkPage() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-muted-foreground text-sm">Tier 3</p>
+              <p className="text-muted-foreground text-sm">{t('network.tier3')}</p>
               <p className="text-2xl font-bold text-foreground mt-1">{networkStats.tier3}</p>
             </div>
           </CardContent>
@@ -363,7 +365,7 @@ export default function EnhancedNetworkPage() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-muted-foreground text-sm">Tier 4</p>
+              <p className="text-muted-foreground text-sm">{t('network.tier4')}</p>
               <p className="text-2xl font-bold text-foreground mt-1">{networkStats.tier4}</p>
             </div>
           </CardContent>
@@ -373,7 +375,7 @@ export default function EnhancedNetworkPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm">High Risk</p>
+                <p className="text-muted-foreground text-sm">{t('network.highRisk')}</p>
                 <p className="text-2xl font-bold text-red-400 mt-1">{networkStats.highRisk}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-red-400" />
@@ -389,7 +391,7 @@ export default function EnhancedNetworkPage() {
             <div className="flex-1 min-w-[200px]">
               <Input
                 type="text"
-                placeholder="Search suppliers..."
+                placeholder={t('network.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className=""
@@ -400,20 +402,20 @@ export default function EnhancedNetworkPage() {
               onChange={(e) => setFilterTier(e.target.value)}
               className="bg-card border border-border rounded px-3 py-2"
             >
-              <option value="all">All Tiers</option>
-              <option value="2">Tier 2</option>
-              <option value="3">Tier 3</option>
-              <option value="4">Tier 4</option>
+              <option value="all">{t('network.allTiers')}</option>
+              <option value="2">{t('network.tier2')}</option>
+              <option value="3">{t('network.tier3')}</option>
+              <option value="4">{t('network.tier4')}</option>
             </select>
             <select
               value={filterRisk}
               onChange={(e) => setFilterRisk(e.target.value)}
               className="bg-card border border-border rounded px-3 py-2"
             >
-              <option value="all">All Risk Levels</option>
-              <option value="low">Low Risk (&lt;40)</option>
-              <option value="medium">Medium Risk (40-69)</option>
-              <option value="high">High Risk (≥70)</option>
+              <option value="all">{t('network.allRiskLevels')}</option>
+              <option value="low">{t('network.lowRisk')}</option>
+              <option value="medium">{t('network.mediumRisk')}</option>
+              <option value="high">{t('network.highRiskFilter')}</option>
             </select>
           </div>
         </CardContent>
@@ -425,7 +427,7 @@ export default function EnhancedNetworkPage() {
           {/* Network Graph */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Network Visualization</CardTitle>
+              <CardTitle>{t('network.visualization')}</CardTitle>
             </CardHeader>
             <CardContent>
               <svg
@@ -501,7 +503,7 @@ export default function EnhancedNetworkPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {selectedSupplier ? 'Supplier Details' : 'Select a Supplier'}
+                {selectedSupplier ? t('network.supplierDetails') : t('network.selectSupplier')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -522,7 +524,7 @@ export default function EnhancedNetworkPage() {
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-gray-400 mt-1" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Location</p>
+                        <p className="text-xs text-muted-foreground">{t('network.location')}</p>
                         <p className="text-sm text-foreground">{selectedSupplier.location}</p>
                       </div>
                     </div>
@@ -530,7 +532,7 @@ export default function EnhancedNetworkPage() {
                     <div className="flex items-start gap-2">
                       <Mail className="w-4 h-4 text-gray-400 mt-1" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="text-xs text-muted-foreground">{t('network.email')}</p>
                         <p className="text-sm text-foreground">{selectedSupplier.contact.email}</p>
                       </div>
                     </div>
@@ -538,7 +540,7 @@ export default function EnhancedNetworkPage() {
                     <div className="flex items-start gap-2">
                       <Phone className="w-4 h-4 text-gray-400 mt-1" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Phone</p>
+                        <p className="text-xs text-muted-foreground">{t('network.phone')}</p>
                         <p className="text-sm text-foreground">{selectedSupplier.contact.phone}</p>
                       </div>
                     </div>
@@ -546,7 +548,7 @@ export default function EnhancedNetworkPage() {
                     <div className="flex items-start gap-2">
                       <TrendingUp className="w-4 h-4 text-gray-400 mt-1" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Risk Score</p>
+                        <p className="text-xs text-muted-foreground">{t('network.riskScore')}</p>
                         <p className="text-sm text-foreground">{selectedSupplier.riskScore}/100</p>
                       </div>
                     </div>
@@ -554,7 +556,7 @@ export default function EnhancedNetworkPage() {
                     <div className="flex items-start gap-2">
                       <FileText className="w-4 h-4 text-gray-400 mt-1" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Last Audit</p>
+                        <p className="text-xs text-muted-foreground">{t('network.lastAudit')}</p>
                         <p className="text-sm text-foreground">{selectedSupplier.lastAudit}</p>
                       </div>
                     </div>
@@ -588,7 +590,7 @@ export default function EnhancedNetworkPage() {
                 </div>
               ) : (
                 <p className="text-muted-foreground text-center py-8">
-                  Click on a node in the network graph to view supplier details
+                  {t('network.clickNode')}
                 </p>
               )}
             </CardContent>

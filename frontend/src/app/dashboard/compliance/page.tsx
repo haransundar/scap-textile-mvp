@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useI18n } from '@/lib/i18n/i18n-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -64,8 +65,9 @@ interface CalendarEvent {
   daysLeft: number;
 }
 
-export default function EnhancedCompliancePage() {
+export default function CompliancePage() {
   const { user } = useAuthStore();
+  const { t } = useI18n();
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [alerts, setAlerts] = useState<ComplianceAlert[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
@@ -287,14 +289,14 @@ export default function EnhancedCompliancePage() {
         {/* Page Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Compliance Monitoring</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('compliance.title')}</h1>
             <p className="text-muted-foreground mt-1">
-              Stay ahead with real-time regulatory updates
+              {t('compliance.subtitle')}
             </p>
           </div>
           <Button className="flex items-center gap-2">
             <Bell className="w-4 h-4" />
-            Subscribe to Alerts
+            {t('compliance.subscribeAlerts')}
           </Button>
         </div>
 
@@ -304,7 +306,7 @@ export default function EnhancedCompliancePage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm">Active Regulations</p>
+                <p className="text-muted-foreground text-sm">{t('compliance.activeRegulations')}</p>
                 <p className="text-2xl font-bold text-foreground mt-1">{stats.activeRegulations}</p>
               </div>
               <Scale className="h-8 w-8 text-blue-400" />
@@ -316,7 +318,7 @@ export default function EnhancedCompliancePage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm">Pending Actions</p>
+                <p className="text-muted-foreground text-sm">{t('compliance.pendingActions')}</p>
                 <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.pendingActions}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-yellow-400" />
@@ -328,7 +330,7 @@ export default function EnhancedCompliancePage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm">Upcoming Deadlines</p>
+                <p className="text-muted-foreground text-sm">{t('compliance.upcomingDeadlines')}</p>
                 <p className="text-2xl font-bold text-red-400 mt-1">{stats.upcomingDeadlines}</p>
               </div>
               <Calendar className="h-8 w-8 text-red-400" />
@@ -340,7 +342,7 @@ export default function EnhancedCompliancePage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm">Compliance Score</p>
+                <p className="text-muted-foreground text-sm">{t('compliance.complianceScore')}</p>
                 <p className="text-2xl font-bold text-green-400 mt-1">{stats.complianceScore}%</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-400" />
@@ -352,7 +354,7 @@ export default function EnhancedCompliancePage() {
       {/* Compliance Alerts Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Compliance Alerts</CardTitle>
+          <CardTitle>{t('compliance.yourAlerts')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {alerts.map((alert) => (
@@ -366,14 +368,14 @@ export default function EnhancedCompliancePage() {
                     <AlertTriangle className="w-4 h-4 text-yellow-400" />
                     <h3 className="font-semibold text-foreground">{alert.title}</h3>
                     <Badge className={getDeadlineColor(alert.daysLeft)}>
-                      {alert.daysLeft} days left
+                      {alert.daysLeft} {t('compliance.daysLeft')}
                     </Badge>
                   </div>
                   
                   <p className="text-muted-foreground text-sm mb-3">{alert.description}</p>
                   
                   <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground font-semibold">Required Actions:</p>
+                    <p className="text-xs text-muted-foreground font-semibold">{t('compliance.requiredActions')}:</p>
                     {alert.actions.map((action, idx) => (
                       <label key={idx} className="flex items-center gap-2 text-sm text-foreground">
                         <input type="checkbox" className="rounded" />
@@ -383,7 +385,7 @@ export default function EnhancedCompliancePage() {
                   </div>
                   
                   <p className="text-xs text-muted-foreground mt-3">
-                    Affects: {alert.affectedCertificates.join(', ')}
+                    {t('compliance.affects')}: {alert.affectedCertificates.join(', ')}
                   </p>
                 </div>
                 
@@ -398,7 +400,7 @@ export default function EnhancedCompliancePage() {
                     setAlerts(updated);
                   }}
                 >
-                  {alert.reviewed ? 'Unmark' : 'Mark as Reviewed'}
+                  {alert.reviewed ? t('compliance.unmark') : t('compliance.markReviewed')}
                 </Button>
               </div>
             </div>
@@ -410,14 +412,14 @@ export default function EnhancedCompliancePage() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Latest Regulatory Updates</CardTitle>
+            <CardTitle>{t('compliance.latestUpdates')}</CardTitle>
             <div className="flex gap-2">
               <select
                 value={selectedRegion}
                 onChange={(e) => setSelectedRegion(e.target.value)}
                 className="bg-card border border-border rounded px-3 py-2 text-sm"
               >
-                <option value="all">All Regions</option>
+                <option value="all">{t('compliance.allRegions')}</option>
                 <option value="eu">European Union</option>
                 <option value="india">India</option>
                 <option value="global">Global</option>
@@ -481,13 +483,13 @@ export default function EnhancedCompliancePage() {
       {/* Chemical Compliance Checker */}
       <Card>
         <CardHeader>
-          <CardTitle>Check Chemical Compliance</CardTitle>
+          <CardTitle>{t('compliance.checkChemical')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2 mb-4">
             <Input
               type="text"
-              placeholder="Enter chemical name or CAS number..."
+              placeholder={t('compliance.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && searchChemicals()}
@@ -495,7 +497,7 @@ export default function EnhancedCompliancePage() {
             />
             <Button onClick={searchChemicals} className="bg-blue-600 hover:bg-blue-700">
               <Search className="w-4 h-4 mr-2" />
-              Search
+              {t('compliance.search')}
             </Button>
           </div>
 
@@ -548,11 +550,11 @@ export default function EnhancedCompliancePage() {
       {/* Compliance Calendar */}
       <Card>
         <CardHeader>
-          <CardTitle>Compliance Calendar</CardTitle>
+          <CardTitle>{t('compliance.calendar')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <h3 className="font-semibold text-foreground text-sm mb-3">Upcoming Deadlines</h3>
+            <h3 className="font-semibold text-foreground text-sm mb-3">{t('compliance.upcomingDeadlinesTitle')}</h3>
             {calendarEvents.map((event) => (
               <div
                 key={event.id}
@@ -577,7 +579,7 @@ export default function EnhancedCompliancePage() {
           
           <Button variant="outline" className="w-full mt-4">
             <Calendar className="w-4 h-4 mr-2" />
-            View Full Calendar
+            {t('compliance.viewCalendar')}
           </Button>
         </CardContent>
       </Card>
