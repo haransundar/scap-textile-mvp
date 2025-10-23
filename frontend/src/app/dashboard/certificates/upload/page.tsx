@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api/client';
 import { Upload, Camera, FileText, CheckCircle, AlertTriangle, X, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const CERTIFICATE_TYPES = [
   'GOTS',
@@ -195,40 +196,42 @@ export default function UploadCertificatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1419] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/dashboard/certificates" className="text-blue-400 hover:text-blue-300 flex items-center gap-2 mb-4">
+          <Link href="/dashboard/certificates" className="text-primary hover:text-primary/80 flex items-center gap-2 mb-4 transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Certificates
           </Link>
-          <h1 className="text-3xl font-bold text-white">Upload Certificate</h1>
-          <p className="mt-2 text-gray-400">
-            AI will automatically extract data from your certificate in about 30 seconds
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold text-foreground">Upload Certificate</h1>
+          </div>
+          <p className="mt-2 text-muted-foreground">
+            🤖 Linky will automatically extract all data from your certificate in about 30 seconds
           </p>
         </div>
 
         {/* Step Indicator */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center gap-4">
-            <div className={`flex items-center gap-2 ${currentStep === 'upload' ? 'text-blue-400' : 'text-gray-500'}`}>
+            <div className={`flex items-center gap-2 ${currentStep === 'upload' ? 'text-primary' : 'text-muted-foreground'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'upload' ? 'bg-blue-600' : 'bg-gray-700'
+                currentStep === 'upload' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
               }`}>1</div>
               <span className="text-sm font-medium">Upload</span>
             </div>
-            <div className="w-16 h-0.5 bg-gray-700"></div>
-            <div className={`flex items-center gap-2 ${currentStep === 'processing' ? 'text-blue-400' : 'text-gray-500'}`}>
+            <div className="w-16 h-0.5 bg-border"></div>
+            <div className={`flex items-center gap-2 ${currentStep === 'processing' ? 'text-primary' : 'text-muted-foreground'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'processing' ? 'bg-blue-600' : 'bg-gray-700'
+                currentStep === 'processing' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
               }`}>2</div>
               <span className="text-sm font-medium">Processing</span>
             </div>
-            <div className="w-16 h-0.5 bg-gray-700"></div>
-            <div className={`flex items-center gap-2 ${currentStep === 'review' ? 'text-blue-400' : 'text-gray-500'}`}>
+            <div className="w-16 h-0.5 bg-border"></div>
+            <div className={`flex items-center gap-2 ${currentStep === 'review' ? 'text-primary' : 'text-muted-foreground'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'review' ? 'bg-blue-600' : 'bg-gray-700'
+                currentStep === 'review' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
               }`}>3</div>
               <span className="text-sm font-medium">Review</span>
             </div>
@@ -237,13 +240,13 @@ export default function UploadCertificatePage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="mb-6 bg-destructive/10 border border-destructive/50 rounded-lg p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-red-400 font-medium">Error</p>
-              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <p className="text-destructive font-medium">Error</p>
+              <p className="text-destructive/90 text-sm mt-1">{error}</p>
             </div>
-            <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-300">
+            <button onClick={() => setError('')} className="ml-auto text-destructive hover:text-destructive/80 transition-colors">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -251,15 +254,15 @@ export default function UploadCertificatePage() {
 
         {/* Step 1: Upload */}
         {currentStep === 'upload' && (
-          <div className="bg-[#1a2332] rounded-lg border border-gray-800 p-8">
+          <div className="bg-card rounded-lg border border-border p-8">
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Certificate Language
               </label>
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full bg-[#0f1419] border border-gray-700 rounded-lg px-4 py-2 text-white"
+                className="w-full bg-background border border-input rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
               >
                 <option value="en">English</option>
                 <option value="hi">Hindi</option>
@@ -274,15 +277,15 @@ export default function UploadCertificatePage() {
                 onDragLeave={handleDragLeave}
                 className={`border-2 border-dashed rounded-lg p-12 text-center transition ${
                   isDragging
-                    ? 'border-blue-500 bg-blue-500/10'
-                    : 'border-gray-700 hover:border-gray-600'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
                 }`}
               >
-                <Upload className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">
+                <Upload className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   Drop your certificate here
                 </h3>
-                <p className="text-gray-400 mb-4">
+                <p className="text-muted-foreground mb-4">
                   or click to browse (JPG, PNG, PDF up to 10MB)
                 </p>
                 <input
@@ -295,13 +298,13 @@ export default function UploadCertificatePage() {
                 <div className="flex gap-3 justify-center">
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-medium transition"
                   >
                     Choose File
                   </button>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition flex items-center gap-2"
+                    className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-6 py-2 rounded-lg font-medium transition flex items-center gap-2"
                   >
                     <Camera className="h-4 w-4" />
                     Take Photo
@@ -311,7 +314,7 @@ export default function UploadCertificatePage() {
             ) : (
               <div className="space-y-4">
                 {previewUrl && (
-                  <div className="bg-[#0f1419] rounded-lg p-4">
+                  <div className="bg-background rounded-lg p-4 border border-border">
                     <img
                       src={previewUrl}
                       alt="Preview"
@@ -319,12 +322,12 @@ export default function UploadCertificatePage() {
                     />
                   </div>
                 )}
-                <div className="bg-[#0f1419] rounded-lg p-4 flex items-center justify-between">
+                <div className="bg-background rounded-lg p-4 flex items-center justify-between border border-border">
                   <div className="flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-blue-400" />
+                    <FileText className="h-8 w-8 text-primary" />
                     <div>
-                      <p className="text-white font-medium">{selectedFile.name}</p>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-foreground font-medium">{selectedFile.name}</p>
+                      <p className="text-muted-foreground text-sm">
                         {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
@@ -334,14 +337,14 @@ export default function UploadCertificatePage() {
                       setSelectedFile(null);
                       setPreviewUrl('');
                     }}
-                    className="text-red-400 hover:text-red-300"
+                    className="text-destructive hover:text-destructive/80 transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 </div>
                 <button
                   onClick={processUpload}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-lg font-medium transition"
                 >
                   Process Certificate
                 </button>
@@ -352,16 +355,17 @@ export default function UploadCertificatePage() {
 
         {/* Step 2: Processing */}
         {currentStep === 'processing' && (
-          <div className="bg-[#1a2332] rounded-lg border border-gray-800 p-12 text-center">
-            <Loader2 className="h-16 w-16 text-blue-400 mx-auto mb-6 animate-spin" />
-            <h3 className="text-xl font-medium text-white mb-4">{processingMessage}</h3>
-            <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+          <div className="bg-card rounded-lg border border-border p-12 text-center">
+            <Loader2 className="h-16 w-16 text-primary mx-auto mb-6 animate-spin" />
+            <h3 className="text-xl font-medium text-foreground mb-4">{processingMessage}</h3>
+            <div className="w-full bg-muted rounded-full h-2 mb-4">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${processingProgress}%` }}
               ></div>
             </div>
-            <p className="text-gray-400">{Math.round(processingProgress)}% Complete</p>
+            <p className="text-muted-foreground">{Math.round(processingProgress)}% Complete</p>
+            <p className="text-muted-foreground text-sm mt-2">🤖 Linky is working hard to extract your data...</p>
           </div>
         )}
 
@@ -369,33 +373,33 @@ export default function UploadCertificatePage() {
         {currentStep === 'review' && (
           <div className="space-y-6">
             {/* Confidence Score Banner */}
-            <div className="bg-[#1a2332] rounded-lg border border-gray-800 p-4 flex items-center justify-between">
+            <div className="bg-card rounded-lg border border-border p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CheckCircle className={`h-6 w-6 ${getConfidenceColor(confidenceScore)}`} />
                 <div>
-                  <p className="text-white font-medium">AI Extraction Complete</p>
+                  <p className="text-foreground font-medium">🤖 Linky's AI Extraction Complete</p>
                   <p className={`text-sm ${getConfidenceColor(confidenceScore)}`}>
                     {getConfidenceLabel(confidenceScore)} ({(confidenceScore * 100).toFixed(0)}%)
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-gray-400 text-sm">Review and edit if needed</p>
+                <p className="text-muted-foreground text-sm">Review and edit if needed</p>
               </div>
             </div>
 
             {/* Extracted Data Form */}
-            <div className="bg-[#1a2332] rounded-lg border border-gray-800 p-6">
-              <h3 className="text-lg font-medium text-white mb-6">Certificate Details</h3>
+            <div className="bg-card rounded-lg border border-border p-6">
+              <h3 className="text-lg font-medium text-foreground mb-6">Certificate Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Certificate Type *
                   </label>
                   <select
                     value={extractedData.certificate_type}
                     onChange={(e) => setExtractedData({ ...extractedData, certificate_type: e.target.value })}
-                    className="w-full bg-[#0f1419] border border-gray-700 rounded-lg px-4 py-2 text-white"
+                    className="w-full bg-background border border-input rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                   >
                     <option value="">Select type</option>
                     {CERTIFICATE_TYPES.map((type) => (
@@ -405,76 +409,76 @@ export default function UploadCertificatePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Certificate Number *
                   </label>
                   <input
                     type="text"
                     value={extractedData.certificate_number}
                     onChange={(e) => setExtractedData({ ...extractedData, certificate_number: e.target.value })}
-                    className="w-full bg-[#0f1419] border border-gray-700 rounded-lg px-4 py-2 text-white"
+                    className="w-full bg-background border border-input rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                     placeholder="Enter certificate number"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Issued By *
                   </label>
                   <input
                     type="text"
                     value={extractedData.issued_by}
                     onChange={(e) => setExtractedData({ ...extractedData, issued_by: e.target.value })}
-                    className="w-full bg-[#0f1419] border border-gray-700 rounded-lg px-4 py-2 text-white"
+                    className="w-full bg-background border border-input rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                     placeholder="Organization name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Issued To
                   </label>
                   <input
                     type="text"
                     value={extractedData.issued_to}
                     onChange={(e) => setExtractedData({ ...extractedData, issued_to: e.target.value })}
-                    className="w-full bg-[#0f1419] border border-gray-700 rounded-lg px-4 py-2 text-white"
+                    className="w-full bg-background border border-input rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                     placeholder="Company name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Issued Date
                   </label>
                   <input
                     type="date"
                     value={extractedData.issued_date}
                     onChange={(e) => setExtractedData({ ...extractedData, issued_date: e.target.value })}
-                    className="w-full bg-[#0f1419] border border-gray-700 rounded-lg px-4 py-2 text-white"
+                    className="w-full bg-background border border-input rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Expiry Date *
                   </label>
                   <input
                     type="date"
                     value={extractedData.expiry_date}
                     onChange={(e) => setExtractedData({ ...extractedData, expiry_date: e.target.value })}
-                    className="w-full bg-[#0f1419] border border-gray-700 rounded-lg px-4 py-2 text-white"
+                    className="w-full bg-background border border-input rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Scope / Description
                   </label>
                   <textarea
                     value={extractedData.scope}
                     onChange={(e) => setExtractedData({ ...extractedData, scope: e.target.value })}
-                    className="w-full bg-[#0f1419] border border-gray-700 rounded-lg px-4 py-2 text-white h-24 resize-none"
+                    className="w-full bg-background border border-input rounded-lg px-4 py-2 text-foreground h-24 resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                     placeholder="Certification scope or description"
                   />
                 </div>
@@ -483,10 +487,10 @@ export default function UploadCertificatePage() {
               {/* OCR Text Collapsible */}
               {ocrText && (
                 <details className="mt-6">
-                  <summary className="cursor-pointer text-blue-400 hover:text-blue-300 text-sm">
+                  <summary className="cursor-pointer text-primary hover:text-primary/80 text-sm transition-colors">
                     View Original OCR Text
                   </summary>
-                  <div className="mt-3 bg-[#0f1419] rounded-lg p-4 text-gray-300 text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
+                  <div className="mt-3 bg-background rounded-lg p-4 border border-border text-muted-foreground text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
                     {ocrText}
                   </div>
                 </details>
@@ -501,13 +505,13 @@ export default function UploadCertificatePage() {
                   setSelectedFile(null);
                   setPreviewUrl('');
                 }}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition"
+                className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground py-3 rounded-lg font-medium transition"
               >
                 Upload Another
               </button>
               <button
                 onClick={handleSave}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-lg font-medium transition"
               >
                 Save Certificate
               </button>
