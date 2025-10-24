@@ -48,7 +48,7 @@ async def get_notifications(
     db = await get_database()
     
     # Build query
-    query = {"user_id": current_user["_id"]}
+    query = {"user_id": current_user["user_id"]}
     
     if type == "unread":
         query["read"] = False
@@ -59,7 +59,7 @@ async def get_notifications(
     
     # Get total count
     total = await db.notifications.count_documents(query)
-    unread = await db.notifications.count_documents({"user_id": current_user["_id"], "read": False})
+    unread = await db.notifications.count_documents({"user_id": current_user["user_id"], "read": False})
     
     # Get paginated results
     skip = (page - 1) * limit
@@ -88,7 +88,7 @@ async def mark_as_read(
     db = await get_database()
     
     result = await db.notifications.update_one(
-        {"_id": ObjectId(notification_id), "user_id": current_user["_id"]},
+        {"_id": ObjectId(notification_id), "user_id": current_user["user_id"]},
         {"$set": {"read": True, "read_at": datetime.utcnow()}}
     )
     
@@ -107,7 +107,7 @@ async def delete_notification(
     db = await get_database()
     
     result = await db.notifications.delete_one(
-        {"_id": ObjectId(notification_id), "user_id": current_user["_id"]}
+        {"_id": ObjectId(notification_id), "user_id": current_user["user_id"]}
     )
     
     if result.deleted_count == 0:
@@ -125,7 +125,7 @@ async def bulk_action(
     db = await get_database()
     
     ids = [ObjectId(id) for id in request.ids]
-    query = {"_id": {"$in": ids}, "user_id": current_user["_id"]}
+    query = {"_id": {"$in": ids}, "user_id": current_user["user_id"]}
     
     if request.action == "read":
         result = await db.notifications.update_many(
@@ -149,7 +149,7 @@ async def get_notification_settings(
     """Get notification preferences"""
     db = await get_database()
     
-    user = await db.users.find_one({"_id": ObjectId(current_user["_id"])})
+    user = await db.users.find_one({"_id": ObjectId(current_user["user_id"])})
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -172,7 +172,7 @@ async def update_notification_settings(
     db = await get_database()
     
     result = await db.users.update_one(
-        {"_id": ObjectId(current_user["_id"])},
+        {"_id": ObjectId(current_user["user_id"])},
         {"$set": {"notification_settings": settings.dict()}}
     )
     

@@ -50,7 +50,7 @@ async def get_profile(
     """Get user profile"""
     db = await get_database()
     
-    user = await db.users.find_one({"_id": ObjectId(current_user["_id"])})
+    user = await db.users.find_one({"_id": ObjectId(current_user["user_id"])})
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -75,7 +75,7 @@ async def update_profile(
     update_data["updated_at"] = datetime.utcnow()
     
     result = await db.users.update_one(
-        {"_id": ObjectId(current_user["_id"])},
+        {"_id": ObjectId(current_user["user_id"])},
         {"$set": update_data}
     )
     
@@ -94,7 +94,7 @@ async def change_password(
     db = await get_database()
     
     # Get user
-    user = await db.users.find_one({"_id": ObjectId(current_user["_id"])})
+    user = await db.users.find_one({"_id": ObjectId(current_user["user_id"])})
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -108,7 +108,7 @@ async def change_password(
     
     # Update password
     await db.users.update_one(
-        {"_id": ObjectId(current_user["_id"])},
+        {"_id": ObjectId(current_user["user_id"])},
         {"$set": {"password": new_password_hash, "password_updated_at": datetime.utcnow()}}
     )
     
@@ -122,7 +122,7 @@ async def get_notification_preferences(
     """Get notification preferences"""
     db = await get_database()
     
-    user = await db.users.find_one({"_id": ObjectId(current_user["_id"])})
+    user = await db.users.find_one({"_id": ObjectId(current_user["user_id"])})
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -145,7 +145,7 @@ async def update_notification_preferences(
     db = await get_database()
     
     result = await db.users.update_one(
-        {"_id": ObjectId(current_user["_id"])},
+        {"_id": ObjectId(current_user["user_id"])},
         {"$set": {"notification_settings": preferences.dict()}}
     )
     
@@ -162,7 +162,7 @@ async def get_team_members(
     """Get team members"""
     db = await get_database()
     
-    user = await db.users.find_one({"_id": ObjectId(current_user["_id"])})
+    user = await db.users.find_one({"_id": ObjectId(current_user["user_id"])})
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -194,7 +194,7 @@ async def invite_team_member(
         raise HTTPException(status_code=404, detail="User not found with this email")
     
     # Check if already a team member
-    current_user_doc = await db.users.find_one({"_id": ObjectId(current_user["_id"])})
+    current_user_doc = await db.users.find_one({"_id": ObjectId(current_user["user_id"])})
     team_members = current_user_doc.get("team_members", [])
     
     if any(m["user_id"] == str(invited_user["_id"]) for m in team_members):
@@ -208,7 +208,7 @@ async def invite_team_member(
     }
     
     await db.users.update_one(
-        {"_id": ObjectId(current_user["_id"])},
+        {"_id": ObjectId(current_user["user_id"])},
         {"$push": {"team_members": new_member}}
     )
     
@@ -236,7 +236,7 @@ async def remove_team_member(
     db = await get_database()
     
     result = await db.users.update_one(
-        {"_id": ObjectId(current_user["_id"])},
+        {"_id": ObjectId(current_user["user_id"])},
         {"$pull": {"team_members": {"user_id": member_id}}}
     )
     

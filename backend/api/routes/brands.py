@@ -35,7 +35,7 @@ async def get_brand_connections(
     
     # Get connections
     connections = await db.brand_connections.find(
-        {"supplier_id": current_user["_id"]}
+        {"supplier_id": current_user["user_id"]}
     ).to_list(length=100)
     
     # Separate by status
@@ -84,7 +84,7 @@ async def connect_brand(
     
     # Check if connection already exists
     existing = await db.brand_connections.find_one({
-        "supplier_id": current_user["_id"],
+        "supplier_id": current_user["user_id"],
         "brand_id": request.brand_id
     })
     
@@ -93,7 +93,7 @@ async def connect_brand(
     
     # Create connection request
     connection = {
-        "supplier_id": current_user["_id"],
+        "supplier_id": current_user["user_id"],
         "brand_id": request.brand_id,
         "status": "pending",
         "request_message": request.request_message,
@@ -118,7 +118,7 @@ async def connect_brand(
         "read": False,
         "action_required": True,
         "action_text": "Review Request",
-        "action_url": f"/dashboard/suppliers/{current_user['_id']}",
+        "action_url": f"/dashboard/suppliers/{current_user['user_id']}",
         "created_at": datetime.utcnow()
     })
     
@@ -136,7 +136,7 @@ async def update_sharing_permissions(
     
     result = await db.brand_connections.update_one(
         {
-            "supplier_id": current_user["_id"],
+            "supplier_id": current_user["user_id"],
             "brand_id": brand_id,
             "status": "connected"
         },
@@ -153,7 +153,7 @@ async def update_sharing_permissions(
     
     # Log sharing history
     await db.sharing_history.insert_one({
-        "supplier_id": current_user["_id"],
+        "supplier_id": current_user["user_id"],
         "brand_id": brand_id,
         "data_type": "permissions_updated",
         "action": "updated",
@@ -173,7 +173,7 @@ async def disconnect_brand(
     db = await get_database()
     
     result = await db.brand_connections.delete_one({
-        "supplier_id": current_user["_id"],
+        "supplier_id": current_user["user_id"],
         "brand_id": brand_id
     })
     
@@ -182,7 +182,7 @@ async def disconnect_brand(
     
     # Log disconnection
     await db.sharing_history.insert_one({
-        "supplier_id": current_user["_id"],
+        "supplier_id": current_user["user_id"],
         "brand_id": brand_id,
         "data_type": "connection",
         "action": "disconnected",
@@ -200,7 +200,7 @@ async def get_sharing_history(
     db = await get_database()
     
     history = await db.sharing_history.find(
-        {"supplier_id": current_user["_id"]}
+        {"supplier_id": current_user["user_id"]}
     ).sort("timestamp", -1).limit(50).to_list(length=50)
     
     # Enrich with brand names
@@ -224,7 +224,7 @@ async def share_profile(
     
     # Get connection
     connection = await db.brand_connections.find_one({
-        "supplier_id": current_user["_id"],
+        "supplier_id": current_user["user_id"],
         "brand_id": brand_id,
         "status": "connected"
     })
@@ -237,12 +237,12 @@ async def share_profile(
     
     # Share certificates
     if permissions.get("certificates"):
-        certs = await db.certificates.find({"supplier_id": current_user["_id"]}).to_list(length=100)
+        certs = await db.certificates.find({"supplier_id": current_user["user_id"]}).to_list(length=100)
         shared_items.extend([{"type": "certificate", "id": str(c["_id"])} for c in certs])
     
     # Share risk score
     if permissions.get("risk_score"):
-        risk = await db.risk_scores.find_one({"supplier_id": current_user["_id"]})
+        risk = await db.risk_scores.find_one({"supplier_id": current_user["user_id"]})
         if risk:
             shared_items.append({"type": "risk_score", "id": str(risk["_id"])})
     
@@ -254,7 +254,7 @@ async def share_profile(
     
     # Log sharing
     await db.sharing_history.insert_one({
-        "supplier_id": current_user["_id"],
+        "supplier_id": current_user["user_id"],
         "brand_id": brand_id,
         "data_type": "full_profile",
         "action": "shared",
