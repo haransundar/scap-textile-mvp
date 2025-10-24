@@ -127,7 +127,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             )
             
         payload = decode_access_token(token)
-        user_id = payload.get("sub")
+        user_id = payload.get("id")  # Use 'id' field which contains the MongoDB ObjectId
+        email = payload.get("sub")   # 'sub' contains the email
         
         if not user_id:
             logger.warning("No user ID in token")
@@ -143,9 +144,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             # You might want to implement token refresh logic here
             
         return {
-            "user_id": user_id, 
-            "email": payload.get("email"),
-            "token": token  # Return the token for potential reuse
+            "user_id": user_id,  # MongoDB ObjectId
+            "email": email,      # User email
+            "token": token       # Return the token for potential reuse
         }
         
     except HTTPException as http_exc:
