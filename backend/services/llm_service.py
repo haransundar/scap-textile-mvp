@@ -16,12 +16,13 @@ logger = logging.getLogger(__name__)
 
 class LLMService:
     def __init__(self):
-        # Initialize Groq client for Qwen and DeepSeek
+        # Initialize Groq client with available models
         try:
             self.groq_client = Groq(api_key=settings.GROQ_API_KEY)
-            self.primary_model = "qwen2-72b-instruct"
-            self.reasoning_model = "deepseek-r1-distill-qwen-32b"
-            logger.info("✅ Groq LLM initialized (Qwen 2 72B + DeepSeek-R1)")
+            # Updated to use available models
+            self.primary_model = "llama-3.3-70b-versatile"  # Fast and versatile
+            self.reasoning_model = "qwen/qwen3-32b"  # For complex reasoning
+            logger.info("✅ Groq LLM initialized (Llama 3.3 70B + Qwen3 32B)")
         except Exception as e:
             logger.warning(f"⚠️ Groq initialization failed: {e}")
             self.groq_client = None
