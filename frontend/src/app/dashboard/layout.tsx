@@ -104,6 +104,12 @@ export default function DashboardLayout({
                   Compliance
                 </Link>
                 <Link
+                  href="/dashboard/network"
+                  className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Network
+                </Link>
+                <Link
                   href="/dashboard/brands"
                   className="text-primary-foreground hover:bg-primary/80 px-3 py-2 rounded-md text-sm font-medium transition"
                 >

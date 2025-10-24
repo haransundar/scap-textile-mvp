@@ -55,7 +55,7 @@ async def upload_certificate(
         certificate_service = CertificateService()
         result = await certificate_service.process_certificate(
             file_path=file_path,
-            user_id=current_user['id'],
+            user_id=current_user['user_id'],
             original_filename=file.filename
         )
         
@@ -98,7 +98,7 @@ async def list_certificates(
     try:
         certificate_service = CertificateService()
         return await certificate_service.list_certificates(
-            user_id=current_user['id'],
+            user_id=current_user['user_id'],
             status=status,
             certificate_type=certificate_type,
             search=search,
@@ -122,7 +122,7 @@ async def get_certificate(
         certificate_service = CertificateService()
         certificate = await certificate_service.get_certificate(
             certificate_id=certificate_id,
-            user_id=current_user['id']
+            user_id=current_user['user_id']
         )
         if not certificate:
             raise HTTPException(status_code=404, detail="Certificate not found")
@@ -146,7 +146,7 @@ async def update_certificate(
         certificate_service = CertificateService()
         updated = await certificate_service.update_certificate(
             certificate_id=certificate_id,
-            user_id=current_user['id'],
+            user_id=current_user['user_id'],
             update_data=update_data
         )
         if not updated:
@@ -170,7 +170,7 @@ async def delete_certificate(
         certificate_service = CertificateService()
         deleted = await certificate_service.delete_certificate(
             certificate_id=certificate_id,
-            user_id=current_user['id']
+            user_id=current_user['user_id']
         )
         if not deleted:
             raise HTTPException(status_code=404, detail="Certificate not found or delete failed")
