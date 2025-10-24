@@ -25,26 +25,11 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 // Create axios instance with default config
-// For server-side requests, use the full URL, for client-side use relative URL
-const baseURL = isServer 
-  ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'  // Backend server port
-  : '';  // Use relative URLs for client-side requests to avoid duplicate /api
-
-// Create a request interceptor to modify URLs before they're sent
-const requestInterceptor = (config: any) => {
-  // Make a copy of the config
-  const newConfig = { ...config };
-  
-  // If the URL starts with /api, remove the duplicate /api prefix
-  if (newConfig.url && newConfig.url.startsWith('/api/')) {
-    newConfig.url = newConfig.url.replace(/^\/api/, '');
-  }
-  
-  return newConfig;
-};
+// Always use the backend URL directly (no /api prefix in baseURL)
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const apiClient = axios.create({
-  baseURL: baseURL.endsWith('/api') ? baseURL : `${baseURL}/api`,
+  baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -52,9 +37,6 @@ const apiClient = axios.create({
   withCredentials: true,
   timeout: 30000
 });
-
-// Add request interceptor to handle URL modifications
-apiClient.interceptors.request.use(requestInterceptor);
 
 // Request interceptor for auth token
 apiClient.interceptors.request.use(

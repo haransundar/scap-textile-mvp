@@ -9,9 +9,9 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
     
     # AI Services
-    GOOGLE_AI_API_KEY: str
-    GROQ_API_KEY: str
-    OPENROUTER_API_KEY: str
+    GOOGLE_AI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
+    OPENROUTER_API_KEY: str = ""
     
     # Database
     MONGODB_URI: str = "mongodb://localhost:27017/scap_local"
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     ALLOWED_FILE_TYPES: list = ["application/pdf", "image/jpeg", "image/png"]
     
     class Config:
-        env_file = ".env"
+        env_file = "../.env"  # Look for .env in parent directory (project root)
         env_file_encoding = 'utf-8'
         case_sensitive = True
         extra = 'ignore'

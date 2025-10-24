@@ -50,9 +50,10 @@ export default function ChatbotPage() {
     setIsLoading(true);
 
     try {
-      const response = await apiClient.post('/api/chat', {
+      const response = await apiClient.post('/api/chat/message', {
         message: userMessage.content,
-        conversation_id: 'default',
+        language: 'en',
+        chat_history: messages.slice(1).map(m => ({ role: m.role, content: m.content })),
       });
 
       const assistantMessage: Message = {

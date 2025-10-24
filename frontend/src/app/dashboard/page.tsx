@@ -8,26 +8,63 @@ import Image from 'next/image';
 export default function DashboardPage() {
   const { user } = useAuthStore();
 
+  // Mock stats - in production, fetch from API
+  const stats = {
+    totalCertificates: 0,
+    riskScore: null,
+    complianceScore: null,
+    pendingAlerts: 0
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Welcome, {user?.full_name || user?.email}</h1>
-            <p className="mt-2 text-muted-foreground">
-              Supply Chain AI Compliance Platform Dashboard
-            </p>
+        {/* Header with Stats */}
+        <div className="mb-6">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Welcome, {user?.full_name || user?.email}</h1>
+              <p className="mt-1 text-muted-foreground">
+                Supply Chain AI Compliance Platform Dashboard
+              </p>
+            </div>
+            <Image 
+              src="/scap-icon.png" 
+              alt="SCAP Logo" 
+              width={60} 
+              height={60}
+              className="opacity-80"
+            />
           </div>
-          <Image 
-            src="/scap-icon.png" 
-            alt="SCAP Logo" 
-            width={60} 
-            height={60}
-            className="opacity-80"
-          />
+          
+          {/* Quick Stats Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-card border border-border rounded-lg px-4 py-3">
+              <p className="text-xs text-muted-foreground">Certificates</p>
+              <p className="text-2xl font-bold text-foreground">{stats.totalCertificates}</p>
+            </div>
+            <div className="bg-card border border-border rounded-lg px-4 py-3">
+              <p className="text-xs text-muted-foreground">Risk Score</p>
+              <p className="text-2xl font-bold text-muted-foreground">
+                {stats.riskScore || '--'}
+              </p>
+            </div>
+            <div className="bg-card border border-border rounded-lg px-4 py-3">
+              <p className="text-xs text-muted-foreground">Compliance</p>
+              <p className="text-2xl font-bold text-muted-foreground">
+                {stats.complianceScore ? `${stats.complianceScore}%` : '--'}
+              </p>
+            </div>
+            <div className="bg-card border border-border rounded-lg px-4 py-3">
+              <p className="text-xs text-muted-foreground">Alerts</p>
+              <p className="text-2xl font-bold text-yellow-500 dark:text-yellow-400">
+                {stats.pendingAlerts}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Risk Score Card */}
           <div className="bg-card rounded-lg p-6 border border-border">
             <div className="flex items-center justify-between mb-4">
@@ -36,15 +73,26 @@ export default function DashboardPage() {
                 View all
               </Link>
             </div>
-            <div className="text-muted-foreground text-sm mb-4">
-              No risk score available
+            <div className="flex flex-col items-center justify-center py-6">
+              <Image 
+                src="/linky-avatar.png" 
+                alt="Linky" 
+                width={64} 
+                height={64}
+                className="mb-4 opacity-70"
+              />
+              <p className="text-muted-foreground text-sm text-center mb-2">
+                📊 Risk Analysis Coming Soon
+              </p>
+              <p className="text-muted-foreground text-xs text-center mb-4">
+                Upload your first certificate to get your compliance risk score powered by AI
+              </p>
+              <Link href="/dashboard/certificates/upload">
+                <button className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-lg text-sm font-medium transition">
+                  Upload Certificate
+                </button>
+              </Link>
             </div>
-            <p className="text-xs text-muted-foreground/70">Last updated: Never</p>
-            <Link href="/dashboard/risk">
-              <button className="mt-4 w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-lg text-sm font-medium transition">
-                View detailed risk analysis →
-              </button>
-            </Link>
           </div>
 
           {/* Certificates Card */}
@@ -55,16 +103,27 @@ export default function DashboardPage() {
                 View all
               </Link>
             </div>
-            <div className="text-muted-foreground text-sm mb-4">
-              No certificates found. Upload your first certificate.
+            <div className="flex flex-col items-center justify-center py-6">
+              <Image 
+                src="/linky-full.png" 
+                alt="Linky Assistant" 
+                width={80} 
+                height={80}
+                className="mb-4 opacity-70"
+              />
+              <p className="text-foreground text-sm font-medium text-center mb-2">
+                No certificates yet!
+              </p>
+              <p className="text-muted-foreground text-xs text-center mb-4">
+                Let's get started by uploading your first compliance certificate. I'll extract all the data for you in seconds!
+              </p>
+              <Link href="/dashboard/certificates/upload">
+                <button className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-lg text-sm font-medium transition">
+                  Upload Your First Certificate
+                </button>
+              </Link>
             </div>
-            <Link href="/dashboard/certificates/upload">
-              <button className="mt-4 w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-lg text-sm font-medium transition">
-                Upload Certificate
-              </button>
-            </Link>
           </div>
-
         </div>
 
         {/* Quick Actions */}
